@@ -21,54 +21,14 @@ cacheable modules 1.76 MiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1970 ms
+webpack 5.99.9 compiled successfully in 2091 ms
 assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.98 MiB
+assets by path *.js 1.99 MiB
   asset bundle.js 1.96 MiB [emitted] (name: main)
-  asset main.f32909bf47f23ca10675.hot-update.js 18.9 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.f32909bf47f23ca10675.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.96 MiB main.f32909bf47f23ca10675.hot-update.js 18.9 KiB
+  asset main.102f20975ded84a4b83e.hot-update.js 22.3 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.102f20975ded84a4b83e.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.99 MiB = bundle.js 1.96 MiB main.102f20975ded84a4b83e.hot-update.js 22.3 KiB
 cached modules 1.76 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 14.1 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 207 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.98 MiB
-  asset bundle.js 1.96 MiB [emitted] (name: main)
-  asset main.db96d5b74e0dcce2cb94.hot-update.js 18.9 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.db96d5b74e0dcce2cb94.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.96 MiB main.db96d5b74e0dcce2cb94.hot-update.js 18.9 KiB
-cached modules 1.76 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 14.1 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 128 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.98 MiB
-  asset bundle.js 1.96 MiB [emitted] (name: main)
-  asset main.841fb60056a353cc5d0c.hot-update.js 19 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.841fb60056a353cc5d0c.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.96 MiB main.841fb60056a353cc5d0c.hot-update.js 19 KiB
-cached modules 1.76 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 14.2 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 80 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.98 MiB
-  asset bundle.js 1.96 MiB [emitted] (name: main)
-  asset main.0ffb03619eedd316e7c3.hot-update.js 19 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.0ffb03619eedd316e7c3.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.96 MiB main.0ffb03619eedd316e7c3.hot-update.js 19 KiB
-cached modules 1.76 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 14.2 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 69 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.98 MiB
-  asset bundle.js 1.96 MiB [emitted] (name: main)
-  asset main.b0e2a137cdca687b3f1c.hot-update.js 19 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.b0e2a137cdca687b3f1c.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.96 MiB main.b0e2a137cdca687b3f1c.hot-update.js 19 KiB
-cached modules 1.76 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 14.2 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 78 ms
+./src/components/CastCombo.js 17.3 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 247 ms

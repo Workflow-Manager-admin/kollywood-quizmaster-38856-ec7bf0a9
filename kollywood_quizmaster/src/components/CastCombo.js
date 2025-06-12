@@ -5,10 +5,11 @@ import QuizProgressBar from "./QuizProgressBar";
 
 /**
  * Game: Cast Combo - guess movie for given combo of actors; reverse: who doesn't fit in given movie.
- * 
- * Extension: if a specific negative cast trivia for 'O Kadhal Kanmani' is needed,
- * override the first question to be a multiple-choice "Pick the actor NOT present in: O Kadhal Kanmani".
- * Fetch real cast, and inject a plausible Kollywood actor as distractor.
+ * Now made substantially harder:
+ *   - Uses supporting/minor actors in combos, rare/obscure or less popular movies from TMDb,
+ *   - Distractors are frequent-appearing (but not in combo) Tamil actors from the broader pool,
+ *   - Actor-not-in-movie combos prefer secondary/cameo names,
+ *   - Movie guesses sometimes use "actors who never co-starred together" distractors.
  */
 // PUBLIC_INTERFACE
 function CastCombo() {
@@ -22,6 +23,7 @@ function CastCombo() {
   const [results, setResults] = useState([]);
   const [okkLoaded, setOkkLoaded] = useState(false);
   const [okkCombo, setOkkCombo] = useState(null);
+  const [supportingActorsPool, setSupportingActorsPool] = useState([]);
   const navigate = useNavigate();
 
   // Helper: shuffle array
@@ -34,12 +36,51 @@ function CastCombo() {
     return a;
   }
 
-  // Generate OK Kanmani special question
+  // Helper to get random item(s) from array, excluding specified ones
+  function pickRandom(arr, count = 1, excludeList = []) {
+    const unique = arr.filter(x => !excludeList.includes(x));
+    for (let i = unique.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unique[i], unique[j]] = [unique[j], unique[i]];
+    }
+    if (count === 1) return unique[0];
+    return unique.slice(0, count);
+  }
+
+  // Preload a pool of rare/supporting actor names, from multiple pages of cast members in random movies
+  useEffect(() => {
+    async function buildSupportingPool() {
+      // Use several pages to find supporting/minor actors from lots of different films (not just stars)
+      const movies = await discoverTamilMovies({ page: 10, sort_by: "release_date.asc" }).catch(() => []);
+      let allSupporting = [];
+      for (let i = 0; i < Math.min(12, movies.length); ++i) {
+        const movie = movies[i];
+        if (!movie) continue;
+        const cast = await getMovieCast(movie.id).catch(() => []);
+        // Exclude first 3–4 billed (make pool of usual bit/supporting/cameo actors)
+        const minor = cast
+          .filter((c, idx) =>
+            c &&
+            c.name &&
+            typeof c.name === "string" &&
+            idx > 2 &&
+            // Exclude single-word "Doctor"/"Villager"/"Boy"/"Girl"/background
+            c.name.trim().length > 4
+          )
+          .map(c => c.name);
+        allSupporting.push(...minor);
+      }
+      // Remove duplicates
+      setSupportingActorsPool(Array.from(new Set(allSupporting)));
+    }
+    buildSupportingPool();
+  }, []);
+
+  // --- Hard "not-in" question for OK Kanmani as step 0 (as before, but uses supporting pool distractor) ---
   useEffect(() => {
     async function setupOkkQn() {
-      // 1. Find TMDb id for O Kadhal Kanmani
       let movieId = null;
-      // Try up to a few variants to avoid mismatch
+      // 1. Find TMDb id for O Kadhal Kanmani
       const variants = [
         "O Kadhal Kanmani",
         "OK Kanmani",
@@ -60,7 +101,6 @@ function CastCombo() {
           break;
         }
       }
-      // Fallback: search for English title "O Kadhal Kanmani"
       if (!movieId && (!movieData || !movieData.id)) {
         const found = await searchMovies("O Kadhal Kanmani");
         movieData = (found || []).find(m =>
@@ -75,78 +115,76 @@ function CastCombo() {
         }
       }
 
-      // 2. Get cast
       let cast = [];
       if (movieId) {
         cast = await getMovieCast(movieId).catch(() => []);
       }
 
-      // 3. Pick 3 main actors
-      const actorNames = (cast || [])
+      // Mix 2 main and 1 supporting/cameo
+      let actorNames = (cast || [])
         .filter(c => c.name)
-        .slice(0, 6) // broaden in case top billed not desired
         .map(c => c.name);
 
-      // Known main actors for context:
-      // Dulquer Salmaan, Nithya Menen, Prakash Raj
-      let mainCast = [];
-      // Ensure Dulquer Salmaan & Nithya Menen included
-      ["Dulquer Salmaan", "Nithya Menen", "Prakash Raj", "Ramya Subramanian", "Leela Samson"].forEach(n => {
-        if (actorNames.includes(n) && !mainCast.includes(n)) {
-          mainCast.push(n);
-        }
-      });
-      // If not enough, fill from fetched
-      for (let n of actorNames) {
-        if (mainCast.length >= 3) break;
-        if (!mainCast.includes(n)) mainCast.push(n);
-      }
-      mainCast = mainCast.slice(0, 3);
+      // Pick 2 "usual" leads and 1 less-obvious (NOT top billed)
+      let mainNames = [];
+      if (actorNames.includes("Dulquer Salmaan")) mainNames.push("Dulquer Salmaan");
+      if (actorNames.includes("Nithya Menen")) mainNames.push("Nithya Menen");
+      const supporting = pickRandom(actorNames.slice(3), 1, mainNames);
+      if (supporting && !mainNames.includes(supporting)) mainNames.push(supporting);
 
-      // 4. Plausible but absent Kollywood actor as distractor (not in mainCast or actorNames)
-      // Use a small pool of famous Kollywood actors or search from other TMDb Tamil movies
-      const plausibleDistractors = [
-        "Sivakarthikeyan",
-        "Vijay",
-        "Vikram",
-        "Karthi",
-        "Suriya",
-        "Arya",
-        "Samantha Ruth Prabhu"
-      ];
-      // Remove any who are (somehow) in main cast
-      const distractor =
-        plausibleDistractors.find(n => !actorNames.includes(n) && !mainCast.includes(n))
-        || "Sivakarthikeyan"; // fallback
+      // Distractor: plausible Kollywood actor name not in this movie (from supporting pool if possible)
+      let distractor = pickRandom(
+        supportingActorsPool.length > 0
+          ? supportingActorsPool
+          : [
+            "Sivakarthikeyan",
+            "Vijay",
+            "Vikram",
+            "Karthi",
+            "Suriya",
+            "Arya",
+            "Samantha Ruth Prabhu"
+          ],
+        1,
+        actorNames
+      );
+      if (!distractor) distractor = "Sivakarthikeyan";
 
-      // Build shuffled options and mark answer
-      const allOptions = shuffle([...mainCast, distractor]);
-      const okkQnCombo = {
+      const allOptions = shuffle([...mainNames, distractor]);
+      setOkkCombo({
         actors: allOptions,
         movie: "O Kadhal Kanmani",
         notIn: distractor
-      };
-      setOkkCombo(okkQnCombo);
+      });
       setOkkLoaded(true);
     }
-    // Only setup for step 0
-    if (step === 0) {
+    // Only generate at step 0 and once actor pool is loaded
+    if (step === 0 && supportingActorsPool.length > 0) {
       setupOkkQn();
     } else {
       setOkkLoaded(false);
     }
     // eslint-disable-next-line
-  }, [step]);
+  }, [step, supportingActorsPool]);
 
-  // Load other game questions (for other steps)
+  // Load an obscure/rare Kollywood movie list for hard question pool
   useEffect(() => {
-    // Just fetch general Tamil movies for other quiz rounds as before
-    discoverTamilMovies({ page: 7 }).then((movies) => {
-      setQuestions(movies.slice(0, TOTAL));
+    // Use low-popularity/old/random page to find less-known movies
+    discoverTamilMovies({
+      sort_by: "vote_count.asc",
+      page: 18 // deeper pages ensure obscurity
+    }).then((movies) => {
+      setQuestions(movies.slice(0, TOTAL)); // Chosen for obscurity
     });
   }, []);
 
-  // For all non-step 0 OR if okkLoaded is false, generate normal question
+  /**
+   * Generate hard cast combo question for step > 0 (or if special not set).
+   * Uses:
+   *   - supporting/bit actors in the combos
+   *   - for "not-in" combos: draws distractors from broader cast/bit pool, not stars
+   *   - Sometimes asks for obscure movie title given uncommon combo, sometimes "which actor is NOT present" with rare/bit/secondary names
+   */
   useEffect(() => {
     async function generateCombo() {
       if (step === 0 && okkLoaded && okkCombo) {
@@ -156,43 +194,72 @@ function CastCombo() {
         setUserAnswer("");
         return;
       }
-      // Otherwise: normal combo question (randomly negative or not, original logic)
+      // Otherwise, choose question type randomly (but weighted towards harder)
       const q = questions[step];
       if (!q) return;
-      await getMovieCast(q.id).then((cast) => {
-        const names = cast
-          .filter((c) => c.name)
-          .slice(0, 9)
-          .map((c) => c.name);
-        if (Math.random() < 0.5) {
-          // Standard: show actors, guess movie
-          setCombo({ actors: names.slice(0, 3), movie: q.title, notIn: "" });
-        } else {
-          // Reverse: show 3 actors from movie + fake distractor not in movie
-          // Find plausible distractors
-          const plausibleDistractors = [
-            "Sivakarthikeyan", "Vijay", "Vikram", "Karthi", "Suriya",
-            "Arya", "Samantha Ruth Prabhu", "Anirudh Ravichander", "Jyotika"
-          ];
-          const notIn =
-            shuffle(plausibleDistractors)
-              .find(nm => !names.includes(nm) && typeof nm === "string")
-            || "Sivakarthikeyan";
-          setCombo({
-            actors: shuffle([...names.slice(0, 3), notIn]).slice(0, 4),
-            movie: q.title,
-            notIn,
-          });
-        }
+      let cast = [];
+      try {
+        cast = await getMovieCast(q.id);
+      } catch {
+        cast = [];
+      }
+      if (!Array.isArray(cast) || cast.length < 6) {
+        // fallback: just 3 names
+        const names = cast.map(c => c.name).filter(Boolean);
+        setCombo({
+          actors: shuffle(names.slice(0, 3)),
+          movie: q.title,
+          notIn: ""
+        });
         setReveal(false);
         setShowClues(false);
         setUserAnswer("");
-      });
+        return;
+      }
+
+      // Split main and deep supporting actors
+      const mains = cast.slice(0, 3).map((c) => c.name);
+      const supportings = cast.slice(4).map((c) => c.name).filter(Boolean);
+      // Give a 2/3 chance for hard mode: supporting/cameo based question, else fallback to "mains"
+      const isNotIn = Math.random() < 0.6;
+
+      if (isNotIn && supportings.length > 0 && supportingActorsPool.length > 6) {
+        // Reverse: "pick actor not present" out of a combo with 2 supportings + 1 plausible name as a difficult distractor
+        const fromMovie = shuffle(pickRandom(supportings, 2));
+        const inThisMovie = mains.length ? shuffle(mains)[0] : supportings[0];
+        const pickedNames = shuffle([...fromMovie, inThisMovie]).slice(0, 3);
+
+        // Distractor is a supporting actor (from Kollywood supporting pool, not in current movie)
+        let distract = pickRandom(supportingActorsPool, 1, [...cast.map(c => c.name), ...pickedNames]);
+        if (!distract) distract = "T. M. Karthik"; // fallback: actual Kollywood bit/cameo actor
+
+        // Shuffle and insert
+        const options = shuffle([...pickedNames, distract]);
+        setCombo({
+          actors: options.slice(0, 4),
+          movie: q.title,
+          notIn: distract
+        });
+      } else {
+        // Forward: guess (possibly obscure) movie from an unusual supporting cast combo
+        let trio = shuffle(supportings).slice(0, 2);
+        if (trio.length < 2) trio = mains.slice(0, 2);
+        // Add one main or another supporting/bit actor
+        const add = pickRandom([...mains, ...supportings], 1, trio);
+        const actorsCombo = shuffle([...trio, add]);
+        setCombo({
+          actors: actorsCombo.slice(0, 3),
+          movie: q.title,
+          notIn: ""
+        });
+      }
+      setReveal(false);
+      setShowClues(false);
+      setUserAnswer("");
     }
-    // Always trigger on step/okkLoaded/question load
     generateCombo();
     // eslint-disable-next-line
-  }, [step, questions, okkLoaded]);
+  }, [step, questions, okkLoaded, supportingActorsPool]);
 
   // PUBLIC_INTERFACE
   function checkAnswer(autoAdvance = false) {
