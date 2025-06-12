@@ -71,103 +71,267 @@ function MovieBingo() {
 
         // Define trivia templates -- randomize assignment
         // All questions will resolve to a unique correct movie+factual answer
+        // Expanded templates: deeper knowledge, more challenging!
         const templates = [
-          // 1. Who starred as...in [movie]?
+          // 1. Which actor played a significant supporting role (not the lead) in [movie]?
           async (movie, moviesPool) => {
-            // Get cast for this movie
             const cast = await getMovieCast(movie.id);
-            const lead = (cast && cast.find(c => c.order === 0)) || cast[0];
-            if (!lead || !lead.name) return null;
-            // Distractor actors from other random movies
-            const otherNames = shuffle(moviesPool)
-              .flatMap(m => m.title && m.id !== movie.id ? [m.id] : [])
-              .map(id => {
+            if (!cast || cast.length < 2) return null;
+            // Try to pick a secondary (supporting) actor - skip first, pick 2nd or 3rd credited
+            const secondary = cast.find((c, idx) => idx > 0 && !!c.name);
+            if (!secondary || !secondary.name) return null;
+            // Distractor actors (not present among main cast)
+            const distractors = shuffle(moviesPool)
+              .map(m => m.id)
+              .filter(id => id !== movie.id)
+              .slice(0, 8) // sample several, use names that are never in this movie's cast
+              .map(async (id) => {
                 const oc = allMovies.find(mv => mv.id === id);
                 if (!oc) return null;
-                return getMovieCast(oc.id).then(cast2 => {
-                  const first = cast2 && cast2[0] && cast2[0].name;
-                  return first && first !== lead.name ? first : null;
-                });
-              }).slice(0, 4);
-            // Wait for distractor names to resolve
-            const distractorsResolved = (await Promise.all(otherNames)).filter(Boolean);
-            // Compose options
-            let options = shuffle([lead.name, ...distractorsResolved].slice(0, 4));
-            let correctIdx = options.findIndex(x => x === lead.name);
+                const cast2 = await getMovieCast(oc.id);
+                const possible = cast2.find((c2) => c2 && c2.name && c2.name !== secondary.name && !cast.find(c0 => c0.name === c2.name));
+                return possible ? possible.name : null;
+              });
+            const distractorsResolved = (await Promise.all(distractors)).filter(Boolean).slice(0, 3);
+            let options = shuffle([secondary.name, ...distractorsResolved]);
+            let correctIdx = options.findIndex(x => x === secondary.name);
             return {
-              type: "actor-in-movie",
-              qText: `Who played the lead in "${movie.title}"?`,
+              type: "secondary-actor-in-movie",
+              qText: `Who played a key supporting role (not the lead) in "${movie.title}"?`,
               options,
               correctIdx,
-              movieTitle: movie.title,
-              correct: lead.name
+              correct: secondary.name,
+              movieTitle: movie.title
             };
           },
-          // 2. Which year was [movie.title] released?
+
+          // 2. Which film below was nominated for or won a national/state award? (random mix)
+          async (movie, moviesPool) => {
+            // To make this non-trivial, pick films with awards/noms in details.
+            const mainDetail = await getMovieDetails(movie.id);
+            if (!mainDetail || !mainDetail.title) return null;
+            // We'll "hack" TMDb's details for awards mentions in 'overview' text (common for noted films).
+            const checkAward = (det) =>
+              det &&
+              det.overview &&
+              /award|winner|nominated|won|best/i.test(det.overview);
+
+            if (!checkAward(mainDetail)) return null; // retry if no confirmation
+
+            // Select 3 distractors without such mention
+            const choices = [];
+            const distractorMovies = [];
+            // try multiple for accuracy
+            for (let i = 0; i < moviesPool.length && distractorMovies.length < 3; i++) {
+              const det = await getMovieDetails(moviesPool[i].id);
+              if (!checkAward(det) && moviesPool[i].id !== movie.id && det.title) {
+                distractorMovies.push(det.title);
+              }
+            }
+            choices.push(mainDetail.title, ...distractorMovies.slice(0, 3));
+            let options = shuffle(choices);
+            let correctIdx = options.findIndex(x => x === mainDetail.title);
+            return {
+              type: "award-winning-film",
+              qText: `Which of these films was nominated for or won a major award (National/State)?`,
+              options,
+              correctIdx,
+              correct: mainDetail.title
+            };
+          },
+
+          // 3. Which of these movies released in a leap year? (Factually hard Q: need deeper release date understanding)
           async (movie, moviesPool) => {
             if (!movie.release_date) return null;
-            const correctYear = movie.release_date.slice(0, 4);
-            // Distractor years: sample release years from other movies
-            const years = shuffle(moviesPool)
-              .map(m => m.release_date && m.release_date.slice(0, 4))
-              .filter(y => y && y !== correctYear);
-            let options = shuffle([correctYear, ...years].slice(0, 4));
-            let correctIdx = options.findIndex(x => x === correctYear);
-            return {
-              type: "year-of-release",
-              qText: `Which year was "${movie.title}" released?`,
-              options,
-              correctIdx,
-              movieTitle: movie.title,
-              correct: correctYear
-            };
-          },
-          // 3. Which movie features [actor name] in a leading role? (From pool)
-          async (movie, moviesPool) => {
-            const cast = await getMovieCast(movie.id);
-            const lead = (cast && cast.find(c => c.order === 0)) || cast[0];
-            if (!lead || !lead.name) return null;
-            // Find three other movies (from pool) not starring this lead
-            let notInLeadMovies = moviesPool.filter(async m => {
-              if (m.id === movie.id) return false;
-              const cast2 = await getMovieCast(m.id);
-              return !cast2.find(c => c.name === lead.name);
-            });
-            // For speed, just sample movie titles at random
-            const otherTitles = shuffle(moviesPool.filter(m => m.id !== movie.id && m.title)).slice(0, 4).map(m => m.title);
-            let options = shuffle([movie.title, ...otherTitles].slice(0, 4));
+            const getYear = (m) => Number(m.release_date?.slice(0, 4));
+            const correctYear = getYear(movie);
+            if (!correctYear || correctYear % 4 !== 0) return null; // must be leap year
+            // Get some non-leap-year movies as distractors
+            let distractors = shuffle(moviesPool.filter(m => m.id !== movie.id && m.release_date)).filter(
+              m => getYear(m) % 4 !== 0
+            ).slice(0, 3);
+            if (distractors.length < 3) return null;
+            let options = shuffle([movie.title, ...distractors.map(m => m.title)]);
             let correctIdx = options.findIndex(x => x === movie.title);
             return {
-              type: "movie-for-actor",
-              qText: `Which movie features actor "${lead.name}" as lead?`,
+              type: "leap-year-film",
+              qText: `Which of these movies was released in a leap year?`,
               options,
               correctIdx,
-              correct: movie.title,
-              actor: lead.name
+              correct: movie.title
             };
           },
-          // 4. What is the genre of [movie.title]? (one correct + distractor genres)
+
+          // 4. Which movie does NOT feature actor [well-known actor] in any role? (hard: negative knowledge)
           async (movie, moviesPool) => {
-            if (!movie.genre_ids || !Array.isArray(movie.genre_ids) || movie.genre_ids.length === 0) return null;
-            // We'll map TMDb's genre IDs to genre names (only top-level for brevity)
-            const genreNames = {
-              28: "Action", 35: "Comedy", 18: "Drama", 10749: "Romance", 27: "Horror", 80: "Crime", 53: "Thriller",
-            };
-            const correctGenreId = movie.genre_ids[0];
-            const correctGenre = genreNames[correctGenreId] || "Drama";
-            // Distractors: other genres from genreNames
-            const distractorGenres = Object.values(genreNames).filter(g => g !== correctGenre);
-            let options = shuffle([correctGenre, ...distractorGenres].slice(0, 4));
-            let correctIdx = options.findIndex(x => x === correctGenre);
+            const cast = await getMovieCast(movie.id);
+            if (!cast || cast.length < 2) return null;
+            // Pick a common (non-lead, seen in many films) Tamil actor
+            const possibleKnown = cast.find(c => c.order > 0 && c.name);
+            if (!possibleKnown) return null;
+            const actorName = possibleKnown.name;
+
+            // Get 1 movie which DOES include, and 3 from pool which do not (have to check)
+            let withActor = movie.title;
+            let withoutActors = [];
+            for (let i = 0; i < moviesPool.length && withoutActors.length < 3; i++) {
+              const cst = await getMovieCast(moviesPool[i].id);
+              if (!cst || !cst.find(c => c.name === actorName)) {
+                withoutActors.push(moviesPool[i].title);
+              }
+            }
+            if (withoutActors.length < 3) return null;
+            let options = shuffle([withActor, ...withoutActors]);
+            // Logical negation for Q:
+            let correctIdx = options.findIndex(x => x !== withActor); // pick first distractor as "not featured"
+            // But ensure all "withActor" only appears once
             return {
-              type: "genre-of-movie",
-              qText: `What is a primary genre of "${movie.title}"?`,
+              type: "actor-not-in-one",
+              qText: `In which film does actor "${actorName}" NOT appear in any credited role?`,
               options,
               correctIdx,
-              correct: correctGenre
+              correct: options[correctIdx]
+            };
+          },
+
+          // 5. Which movie's plot involves a [subtle plot keyword, unique per movie]?
+          async (movie, moviesPool) => {
+            const mainDetail = await getMovieDetails(movie.id);
+            if (!mainDetail || !mainDetail.overview) return null;
+            // Try to extract a less-obvious plot keyword (skip "love", "life"); use a noun > 4 chars
+            const keywords = Array.from(
+              new Set(
+                mainDetail.overview
+                  .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
+                  .split(" ")
+                  .filter(w => w.length > 4 && !/love|story|movie|their|about|these|there|after|while|other|from|with/i.test(w))
+                  .map(w => w[0].toUpperCase() + w.slice(1).toLowerCase())
+              )
+            );
+            const plotKey = shuffle(keywords)[0];
+            if (!plotKey) return null;
+            // Find 3 distractor movies whose overviews do NOT contain this word
+            const distractors = [];
+            for (let i = 0; i < moviesPool.length && distractors.length < 3; i++) {
+              const det = await getMovieDetails(moviesPool[i].id);
+              if (!det || !det.overview) continue;
+              if (!new RegExp(plotKey, "i").test(det.overview) && movie.id !== moviesPool[i].id) {
+                distractors.push(det.title);
+              }
+            }
+            if (distractors.length < 3) return null;
+            let options = shuffle([movie.title, ...distractors]);
+            let correctIdx = options.findIndex(x => x === movie.title);
+            return {
+              type: "plot-keyword-challenge",
+              qText: `Which film's story notably involves "${plotKey}"?`,
+              options,
+              correctIdx,
+              correct: movie.title
+            };
+          },
+
+          // 6. Which movie was the earliest release among these? (non-obvious: all non-famous movies)
+          async (movie, moviesPool) => {
+            const sameEra = shuffle(moviesPool.filter(m => m.release_date && m.id !== movie.id)).slice(0, 3);
+            if (sameEra.length < 3) return null;
+            const candidates = [movie, ...sameEra];
+            const options = shuffle(candidates).map(m => m.title);
+            const minYear = Math.min(...candidates.map(m => +m.release_date.slice(0,4)));
+            const correctMovie = candidates.find(m => +m.release_date.slice(0,4) === minYear);
+            let correctIdx = options.findIndex(x => x === correctMovie.title);
+            return {
+              type: "earliest-of-these",
+              qText: `Which of these films was released earliest?`,
+              options,
+              correctIdx,
+              correct: correctMovie.title
+            };
+          },
+
+          // 7. Who composed the soundtrack for [movie]? (only if composer is credited in details)
+          async (movie, moviesPool) => {
+            const details = await getMovieDetails(movie.id);
+            if (!details || !details.credits || !Array.isArray(details.credits.crew)) return null;
+            const musicDirs = details.credits.crew.filter(
+              (mem) => mem && /music|original score|composer/i.test(mem.job)
+            );
+            if (!musicDirs.length) return null;
+            const composer = musicDirs[0].name;
+            // Get distractor composer names
+            const options = shuffle([
+              composer,
+              "Yuvan Shankar Raja",
+              "Anirudh Ravichander",
+              "Ilaiyaraaja",
+              "D. Imman",
+              "G. V. Prakash Kumar",
+              "A. R. Rahman"
+            ]).slice(0, 4);
+            let correctIdx = options.findIndex(x => x === composer);
+            return {
+              type: "composer-of-movie",
+              qText: `Who composed the music for "${movie.title}"?`,
+              options,
+              correctIdx,
+              correct: composer
+            };
+          },
+
+          // 8. Who played a pivotal cameo role in [movie]? (for films w/ cameo in cast - name comes from cast order>5, marked as cameo)
+          async (movie, moviesPool) => {
+            const cast = await getMovieCast(movie.id);
+            const cameo = cast && cast.find(c => (c.order > 5 && c.character && /cameo/i.test(c.character)) );
+            if (!cameo || !cameo.name) return null;
+            // Distractors = pick names from cast not in this movie
+            const distractors = [];
+            for (let i = 0; i < moviesPool.length && distractors.length < 3; i++) {
+              const movieCast = await getMovieCast(moviesPool[i].id);
+              if (!movieCast || !movieCast.find(ct => ct.name === cameo.name)) {
+                const alt = movieCast.find(ct => !!ct.name);
+                if (alt) distractors.push(alt.name);
+              }
+            }
+            if (distractors.length < 3) return null;
+            let options = shuffle([cameo.name, ...distractors]);
+            let correctIdx = options.findIndex(x => x === cameo.name);
+            return {
+              type: "cameo-role-pivot",
+              qText: `Who played a pivotal cameo in "${movie.title}"?`,
+              options,
+              correctIdx,
+              correct: cameo.name
+            };
+          },
+
+          // 9. Which film was directed by [director]? (get director from movie details/credits)
+          async (movie, moviesPool) => {
+            const details = await getMovieDetails(movie.id);
+            let directorObj = null;
+            if (details && details.credits && Array.isArray(details.credits.crew)) {
+              directorObj = details.credits.crew.find(m => /director/i.test(m.job));
+            }
+            if (!directorObj || !directorObj.name) return null;
+            const director = directorObj.name;
+            // Find 3 movies not directed by this director
+            const distractors = [];
+            for (let i = 0; i < moviesPool.length && distractors.length < 3; i++) {
+              const det = await getMovieDetails(moviesPool[i].id);
+              if (det.credits && det.credits.crew && !det.credits.crew.find(m => m.name === director && /director/i.test(m.job))) {
+                distractors.push(det.title);
+              }
+            }
+            if (distractors.length < 3) return null;
+            let options = shuffle([movie.title, ...distractors]);
+            let correctIdx = options.findIndex(x => x === movie.title);
+            return {
+              type: "director-movie-match",
+              qText: `Which movie was directed by "${director}"?`,
+              options,
+              correctIdx,
+              correct: movie.title
             };
           }
-          // Add more template types here for more variety.
         ];
 
         // Now, prepare a shuffled set of 9 movie problems
