@@ -13,22 +13,47 @@ runtime modules 27.5 KiB 14 modules
 orphan modules 12.8 KiB [orphan] 3 modules
 cacheable modules 1.71 MiB
   modules by path ./node_modules/ 1.61 MiB 34 modules
-  modules by path ./src/ 86.8 KiB
-    modules by path ./src/components/*.js 65.1 KiB 10 modules
+  modules by path ./src/ 88 KiB
+    modules by path ./src/components/*.js 66.3 KiB 10 modules
     modules by path ./src/*.css 10.6 KiB 4 modules
     modules by path ./src/*.js 11.1 KiB 3 modules
   modules by path ./.ve/ 15.1 KiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1813 ms
+webpack 5.99.9 compiled successfully in 1913 ms
 assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.93 MiB
-  asset bundle.js 1.9 MiB [emitted] (name: main)
-  asset main.25d6695ec91ee94730cf.hot-update.js 31.1 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.25d6695ec91ee94730cf.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.93 MiB = bundle.js 1.9 MiB main.25d6695ec91ee94730cf.hot-update.js 31.1 KiB
-cached modules 1.7 MiB [cached] 58 modules
+assets by path *.js 1.92 MiB
+  asset bundle.js 1.91 MiB [emitted] (name: main)
+  asset main.5ca3fdaede5dc8da0386.hot-update.js 14.4 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.5ca3fdaede5dc8da0386.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.92 MiB = bundle.js 1.91 MiB main.5ca3fdaede5dc8da0386.hot-update.js 14.4 KiB
+cached modules 1.72 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
-./src/components/CharacterMovieMatch.js 25.3 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 223 ms
+./src/components/MovieBingo.js 10.7 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 214 ms
+assets by status 1.91 MiB [cached] 2 assets
+cached modules 1.7 MiB (javascript) 27.5 KiB (runtime) [cached] 72 modules
+./src/components/CharacterMovieMatch.js 25.3 KiB [built]
+webpack 5.99.9 compiled successfully in 157 ms
+Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.91 MiB
+  asset bundle.js 1.91 MiB [emitted] (name: main)
+  asset main.512735ff640ae20acce2.hot-update.js 2.8 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.512735ff640ae20acce2.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.91 MiB = bundle.js 1.91 MiB main.512735ff640ae20acce2.hot-update.js 2.8 KiB
+cached modules 1.73 MiB [cached] 58 modules
+runtime modules 27.5 KiB 14 modules
+./src/index.js 573 bytes [built] [code generated]
+webpack 5.99.9 compiled successfully in 47 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.92 MiB
+  asset bundle.js 1.91 MiB [emitted] (name: main)
+  asset main.eb0df77e743829b82812.hot-update.js 13.5 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.eb0df77e743829b82812.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.92 MiB = bundle.js 1.91 MiB main.eb0df77e743829b82812.hot-update.js 13.5 KiB
+cached modules 1.72 MiB [cached] 58 modules
+runtime modules 27.5 KiB 14 modules
+./src/App.js 6.58 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 71 ms

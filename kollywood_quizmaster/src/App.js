@@ -16,6 +16,8 @@ import GameSummary from "./components/GameSummary";
 // -- App-wide user context. --
 export const UserContext = createContext(null);
 
+// No PUBLIC_URL usage here; kept as-is
+
 function Navbar({ user, onLogout }) {
   return (
     <nav className="kq-navbar">
