@@ -21,12 +21,36 @@ function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
+// --- SESSION CATEGORY LOGIC ---
+// To ensure unique categories per game session, we'll keep a static sessionCategoryQueue in module scope.
+// When a new game starts (component mount), we'll shuffle and use this queue for the round order.
+let sessionCategoryQueue = [];
+let sessionCategoryQueueIdx = 0;
+const SESSION_SIZE = 10; // Number of unique bingo sessions/questions per game (matches game rounds in parent)
+
+function pickNextBingoCategory() {
+  // If starting, (re)shuffle and reset
+  if (
+    !sessionCategoryQueue.length ||
+    sessionCategoryQueue.length !== bingoCategories.length ||
+    sessionCategoryQueueIdx >= sessionCategoryQueue.length
+  ) {
+    sessionCategoryQueue = shuffle([...bingoCategories]);
+    sessionCategoryQueueIdx = 0;
+  }
+  const picked = sessionCategoryQueue[sessionCategoryQueueIdx];
+  sessionCategoryQueueIdx += 1;
+  return picked;
+}
+
 // PUBLIC_INTERFACE
 function MovieBingo({ onResult }) {
   /**
    * Movie Bingo: 3x3 grid of movies, but ONLY ONE grid cell (movie) can be selected per category/question.
    * Clicking a cell locks the answer: cell colors green for correct answer, red for wrong. Cannot change after selection.
    * Robust to rapid or duplicate clicks and missing data edge cases.
+   * 
+   * It is refactored so that each session/game draws a unique category (bingo challenge) for each question, not repeating during user's 10-round session.
    */
   const [category, setCategory] = useState(null);
   const [movies, setMovies] = useState([]); // [{id, title}]
@@ -46,19 +70,17 @@ function MovieBingo({ onResult }) {
       setError("");
       setMovies([]);
       setSelectedIdx(null);
-      setCategory(null);
       setIsCorrect(null);
       setGridDisabled(false);
       setCorrectIdx(null);
 
-      // Pick random category
-      const chosenCat = shuffle(bingoCategories)[0];
+      // Pick unique random category for this round/session (never repeated in one user's session of 10 questions)
+      const chosenCat = pickNextBingoCategory();
       setCategory(chosenCat);
 
       // Determine filter logic and load at least 9 grid movies and one true match/correct answer
       let found = [];
       let correctMovie = null;
-      let correctIdxTmp = null;
 
       let page = 1;
       try {
