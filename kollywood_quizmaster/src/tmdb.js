@@ -4,8 +4,9 @@
 //
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
-// Get API key from env var if available, fallback to literal for CI/demo
-const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY || "5bc67d3b06aecbd18121a3cbbc16eb59";
+// Directly hardcoded API key for frontend-only usage.
+// Do NOT use process.env in any code running in the browser—use this string literal only.
+const TMDB_API_KEY = "5bc67d3b06aecbd18121a3cbbc16eb59";
 
 /**
  * Helper for GET requests to TMDb API with authentication.
