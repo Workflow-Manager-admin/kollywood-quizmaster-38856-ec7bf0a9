@@ -23,6 +23,8 @@ function SpinTheWheel({ onResult }) {
         // Choose 3 distinct movies with cast
         let page = Math.floor(Math.random() * 2) + 1;
         let data = await fetchPopularKollywoodMovies(page);
+        if (!data || !Array.isArray(data.results) || data.results.length === 0)
+          throw new Error("TMDb did not return enough Tamil movies (quota exhausted or network failure).");
         let picks = [];
         let seen = new Set();
         let tries = 0;
@@ -31,14 +33,21 @@ function SpinTheWheel({ onResult }) {
           if (!m || !m.id || seen.has(m.id)) {
             tries++; continue;
           }
-          let det = await fetchMovieDetails(m.id);
+          let det;
+          try {
+            det = await fetchMovieDetails(m.id);
+          } catch (e) {
+            tries++;
+            continue;
+          }
           if (!det.title || !det.credits?.cast?.[0]) {
             tries++; continue;
           }
           picks.push(det);
           seen.add(m.id);
         }
-        if (picks.length < 3) throw new Error("Could not get valid movie options");
+        if (picks.length < 3)
+          throw new Error("Could not get valid movie options from TMDb. (Quota, network, data error?)");
         // Pick correct, and extract actor/year from it
         const idx = Math.floor(Math.random() * 3);
         const correct = picks[idx];
@@ -49,7 +58,7 @@ function SpinTheWheel({ onResult }) {
         setWheel({ spin: false, actor, year });
         setStatus("spun");
       } catch (e) {
-        setError("Failed to fetch Spin the Wheel question");
+        setError((e && e.message ? e.message : "Failed to fetch Spin the Wheel question"));
         setStatus("error");
       }
     }

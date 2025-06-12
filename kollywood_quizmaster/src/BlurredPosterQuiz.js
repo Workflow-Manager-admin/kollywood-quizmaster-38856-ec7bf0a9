@@ -26,25 +26,41 @@ function BlurredPosterQuiz({ onResult }) {
       setMovie(null);
 
       try {
-        // Fetch first 3 pages, then pick a random movie from the array
+        // Fetch first 3 pages, then pick a random movie from the array (robust to edge cases)
         const randomPage = Math.floor(Math.random() * 3) + 1;
         const data = await fetchPopularKollywoodMovies(randomPage);
+        if (!data || !Array.isArray(data.results) || data.results.length === 0) {
+          throw new Error("No Kollywood movies were found for this round (TMDb). Try again later!");
+        }
         let idx = Math.floor(Math.random() * data.results.length);
         let m = data.results[idx];
         // Must have poster
-        for (let tries = 0; tries < 6 && (!m || !m.poster_path); tries++) {
+        let tries = 0;
+        while (
+          (tries < 8) &&
+          (!m || !m.poster_path || m.poster_path === null)
+        ) {
           idx = Math.floor(Math.random() * data.results.length);
           m = data.results[idx];
+          tries++;
+        }
+        if (!m || !m.poster_path) {
+          throw new Error("No suitable Kollywood movie poster found. Please try refresh.");
         }
         // Fetch details for clues
-        const details = await fetchMovieDetails(m.id);
+        let details;
+        try {
+          details = await fetchMovieDetails(m.id);
+        } catch (e) {
+          throw new Error(e.message || "Could not fetch details for this movie. Try refresh.");
+        }
         if (!ignore) {
           setMovie({ ...m, ...details });
           setAnswer(details.title);
           setStatus("ready");
         }
       } catch (e) {
-        setError("Failed to load movie. Try refresh.");
+        setError(typeof e === "string" ? e : (e.message || "Failed to load movie. Try refresh."));
         setStatus("error");
       }
     }

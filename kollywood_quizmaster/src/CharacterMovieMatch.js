@@ -26,6 +26,8 @@ function CharacterMovieMatch({ onResult }) {
       try {
         // Grab 3 movies with credits, each with "main" character
         const data = await fetchPopularKollywoodMovies(1);
+        if (!data || !Array.isArray(data.results) || data.results.length < 3)
+          throw new Error("TMDb didn't return enough Kollywood movies. Quota exhausted or data error.");
         let selected = shuffle(data.results.filter(m => m.id)).slice(0, 3);
         const details = await Promise.all(selected.map(x => fetchMovieDetails(x.id)));
         // Each: {character, movieTitle}
@@ -40,7 +42,7 @@ function CharacterMovieMatch({ onResult }) {
         setAnswers({});
         setStatus("playing");
       } catch (e) {
-        setError("Failed to load data. Please try again.");
+        setError(e.message || "Failed to load data. Please try again.");
       }
       setLoading(false);
     }

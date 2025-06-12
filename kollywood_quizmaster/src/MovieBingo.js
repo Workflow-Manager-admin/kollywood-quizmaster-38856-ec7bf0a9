@@ -47,6 +47,8 @@ function MovieBingo({ onResult }) {
         // Keep trying next page until we have 9 movies
         while (found.length < 9 && page < 7) {
           const d = await fetchPopularKollywoodMovies(page++);
+          if (!d || !Array.isArray(d.results))
+            throw new Error("TMDb/network error while loading movies for Bingo.");
           for (const m of d.results) {
             if (found.length >= 9) break;
             // filter by category property
@@ -65,7 +67,12 @@ function MovieBingo({ onResult }) {
               match = true;
             else if (chosenCat.director) {
               // fetch details and check director
-              let det = await fetchMovieDetails(m.id);
+              let det;
+              try {
+                det = await fetchMovieDetails(m.id);
+              } catch (err) {
+                throw new Error(err.message || "TMDb/network error while loading details.");
+              }
               if (
                 det.credits &&
                 det.credits.crew &&
@@ -83,11 +90,13 @@ function MovieBingo({ onResult }) {
             if (match) found.push({ id: m.id, title: m.title });
           }
         }
+        if (found.length === 0)
+          throw new Error("No valid Kollywood movies fit Bingo category. API quota or data issue.");
         found = shuffle(found.slice(0, 9));
         setMovies(found);
         setStatus("ready");
       } catch (e) {
-        setError("Failed to load movie data for Bingo grid. " + e.message);
+        setError((e && e.message ? e.message : "") || "Failed to load movie data for Bingo grid.");
         setStatus("error");
       }
     }

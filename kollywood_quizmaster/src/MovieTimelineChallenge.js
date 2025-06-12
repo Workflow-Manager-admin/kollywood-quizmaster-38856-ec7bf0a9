@@ -27,8 +27,10 @@ function MovieTimelineChallenge({ onResult }) {
       try {
         // Fetch a random page, pick 4-5 movies for order game
         const pg = Math.floor(Math.random() * 2) + 1;
-        const { results } = await fetchPopularKollywoodMovies(pg);
-        let picked = results
+        const resp = await fetchPopularKollywoodMovies(pg);
+        if (!resp || !Array.isArray(resp.results) || resp.results.length < 4)
+          throw new Error("TMDb returned insufficient Kollywood movies (quota exhausted or data error).");
+        let picked = resp.results
           .filter(m => m.release_date)
           .slice(0, 5);
         // Fetch details for year
@@ -47,7 +49,7 @@ function MovieTimelineChallenge({ onResult }) {
         setAnswerOrder(sorted);
         setStatus("playing");
       } catch (e) {
-        setError("Failed to load timeline data.");
+        setError(e.message || "Failed to load timeline data.");
         setStatus("error");
       }
     }

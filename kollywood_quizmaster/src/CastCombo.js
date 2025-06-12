@@ -33,11 +33,13 @@ function CastCombo({ onResult }) {
         // For 'combo' mode: pick a movie, get 2-3 actor names, ask for movie.
         if (chosenMode === "combo") {
           let data = await fetchPopularKollywoodMovies(1 + Math.floor(Math.random() * 2));
+          if (!data || !Array.isArray(data.results) || data.results.length === 0)
+            throw new Error("TMDb: No Tamil movies for Cast Combo mode (quota or network issue).");
           let mIdx = Math.floor(Math.random() * data.results.length);
           let m = data.results[mIdx];
           let det = await fetchMovieDetails(m.id);
           let c = (det.credits?.cast || []).slice(0, 3);
-          if (c.length < 2) throw new Error("Could not get enough cast");
+          if (c.length < 2) throw new Error("Could not get enough cast for combo mode.");
           let names = c.map(a => a.name);
           setCombo(names);
           setAnswer(det.title);
@@ -45,15 +47,18 @@ function CastCombo({ onResult }) {
         } else {
           // For odd-one-out: show 3 actors, 2 in movie, 1 not; user picks the actor not in the movie.
           let data = await fetchPopularKollywoodMovies(1);
+          if (!data || !Array.isArray(data.results) || data.results.length === 0)
+            throw new Error("TMDb: No Tamil movies for Cast Combo mode (quota/network error).");
           let base = Math.floor(Math.random() * data.results.length);
           let baseMovie = await fetchMovieDetails(data.results[base].id);
           let cast = (baseMovie.credits?.cast || []).slice(0, 2);
-          if (cast.length < 2) throw new Error("Not enough cast for odd-one-out");
+          if (cast.length < 2) throw new Error("Not enough cast for odd-one-out mode.");
           let allActors = [cast[0].name, cast[1].name];
           // Try get a real Tamil actor from another movie not in that cast
           let tries = 0, odd = "";
           while (tries < 10 && !odd) {
             let d = await fetchPopularKollywoodMovies(1 + Math.floor(Math.random() * 2));
+            if (!d || !Array.isArray(d.results) || d.results.length === 0) break;
             let mi = Math.floor(Math.random() * d.results.length);
             let m = await fetchMovieDetails(d.results[mi].id);
             let c = (m.credits?.cast ?? []);
@@ -61,6 +66,7 @@ function CastCombo({ onResult }) {
             if (alt && !allActors.includes(alt)) odd = alt;
             tries++;
           }
+          if (!odd) throw new Error("Couldn't generate valid set for odd-one-out.");
           let optionList = shuffle([allActors[0], allActors[1], odd]);
           setCombo(optionList);
           setAnswer(odd);
@@ -68,7 +74,7 @@ function CastCombo({ onResult }) {
           setStatus("ready");
         }
       } catch (e) {
-        setError("Failed to fetch CastCombo data");
+        setError(e.message || "Failed to fetch CastCombo data");
         setStatus("error");
       }
     }
