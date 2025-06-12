@@ -9,6 +9,9 @@ import QuizProgressBar from "./QuizProgressBar";
  * No movie/character repeats until all exhausted. Accurate scoring/results.
  */
 
+/**
+ * Ensure no use of PUBLIC_URL (must use process.env.PUBLIC_URL for React scripts).
+ */
 // PUBLIC_INTERFACE
 function CharacterMovieMatch() {
   // === CONFIGURABLES ===
@@ -398,46 +401,14 @@ function CharacterMovieMatch() {
             const assignedCharacter = assignments[movie.id];
             const isDropTarget = !assignedCharacter && !reveal;
 
-            // --- New Highlight Logic ---
-            // Provide immediate visual feedback if this poster is being hovered with the draggedClue, 
-            // and draggedClue matches this movie's correct character clue.
-            const isDraggedOverCorrect =
-              isDropTarget &&
-              draggedClue &&
-              clues.find(
-                (clue) => clue.character === draggedClue && clue.movieId === movie.id
-              );
-            const isDraggedOverWrong =
-              isDropTarget &&
-              draggedClue &&
-              clues.find(
-                (clue) => clue.character === draggedClue && clue.movieId !== movie.id
-              );
-
-            // highlight parameters
+            // === Remove all drag-and-drop feedback/highlights prior to submission/reveal (per requirements) ===
+            // No checkmark, cross, highlight, or indicator before submit or reveal.
             let dropBorderColor = assignedCharacter
               ? "#f604c2"
               : "2px dashed #f604c2";
             let dropBoxShadow = "";
             let dropIndicator = null;
-
-            if (isDraggedOverCorrect) {
-              dropBorderColor = "2.5px solid #1b9e38";
-              dropBoxShadow = "0 0 9px 1.5px #75c684";
-              dropIndicator = (
-                <span title="Matching!">
-                  <span style={{ color: "#1b9e38", fontWeight: 900, fontSize: 19, marginLeft: 4 }}>✔️</span>
-                </span>
-              );
-            } else if (isDraggedOverWrong) {
-              dropBorderColor = "2.5px solid #b51b3b";
-              dropBoxShadow = "0 0 9px 1.5px #b51b3b55";
-              dropIndicator = (
-                <span title="Incorrect match!">
-                  <span style={{ color: "#b51b3b", fontWeight: 900, fontSize: 18, marginLeft: 4 }}>❌</span>
-                </span>
-              );
-            }
+            // (All further drop visual feedback logic removed — only basic border until reveal)
 
             return (
               <div
@@ -540,13 +511,8 @@ function CharacterMovieMatch() {
                         alignItems: "center"
                       }}
                     >
-                      {isDropTarget
-                        ? <>{isDraggedOverCorrect
-                          ? <>Correct match! {dropIndicator}</>
-                          : isDraggedOverWrong
-                          ? <>Not a match {dropIndicator}</>
-                          : "Drop clue here"}
-                        </>
+                      {isDropTarget && !reveal
+                        ? "Drop clue here"
                         : "—"
                       }
                     </span>

@@ -32,3 +32,33 @@ cached modules 1.7 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
 ./src/components/CharacterMovieMatch.js 24.8 KiB [built] [code generated]
 webpack 5.99.9 compiled successfully in 209 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.93 MiB
+  asset bundle.js 1.9 MiB [emitted] (name: main)
+  asset main.03571295dadd9e1eba6d.hot-update.js 29.1 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.03571295dadd9e1eba6d.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.93 MiB = bundle.js 1.9 MiB main.03571295dadd9e1eba6d.hot-update.js 29.1 KiB
+cached modules 1.7 MiB [cached] 58 modules
+runtime modules 27.5 KiB 14 modules
+./src/components/CharacterMovieMatch.js 23.2 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 132 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.92 MiB
+  asset bundle.js 1.9 MiB [emitted] (name: main)
+  asset main.901917a99f1857c354d5.hot-update.js 28.5 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.901917a99f1857c354d5.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.92 MiB = bundle.js 1.9 MiB main.901917a99f1857c354d5.hot-update.js 28.5 KiB
+cached modules 1.7 MiB [cached] 58 modules
+runtime modules 27.5 KiB 14 modules
+./src/components/CharacterMovieMatch.js 22.8 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 130 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.93 MiB
+  asset bundle.js 1.9 MiB [emitted] (name: main)
+  asset main.b26d61a7e68b5b11bc04.hot-update.js 28.6 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.b26d61a7e68b5b11bc04.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.93 MiB = bundle.js 1.9 MiB main.b26d61a7e68b5b11bc04.hot-update.js 28.6 KiB
+cached modules 1.7 MiB [cached] 58 modules
+runtime modules 27.5 KiB 14 modules
+./src/components/CharacterMovieMatch.js 22.9 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 108 ms
