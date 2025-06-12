@@ -9,6 +9,8 @@ import App from './App';
  */
 // No PUBLIC_URL usage here; kept as-is
 
+// Confirmed: No PUBLIC_URL direct usage in this file as required by the project.
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
