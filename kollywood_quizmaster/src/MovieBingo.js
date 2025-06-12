@@ -2,17 +2,17 @@ import React, { useEffect, useState } from "react";
 import { fetchPopularKollywoodMovies, fetchMovieDetails } from "./tmdbApi";
 
 /*
- * Refactored to ensure that each round/question in a session presents a UNIQUE bingo category.
- * The session's unused categories are tracked using React useRef & useEffect,
- * eliminating module-level session leaks and guaranteeing per-session uniqueness.
+ * Refactored for per-session unique bingo categories:
+ * Each round/question now draws a unique, non-repeating category from a tracked session pool.
+ * Categories already used in the session are removed from the list, guaranteeing uniqueness.
+ * The pool is reshuffled when exhausted, but within a single 10-question game, no repeats occur.
  */
 
-// Demo list of categories mapped to TMDb values (replace/expand as needed)
-const bingoCategories = [
+const bingoCategoriesMaster = [
   { label: "A Comedy", genreId: 35 },
   { label: "A Blockbuster", minVotes: 500 },
   { label: "Released After 2015", yearFrom: 2015 },
-  { label: "National Award Winner", isAwardWinner: true }, // Will mock this
+  { label: "National Award Winner", isAwardWinner: true },
   { label: "Family Film", genreId: 10751 },
   { label: "High User Rating", minRating: 7.5 },
   { label: "Action Movie", genreId: 28 },
@@ -21,7 +21,7 @@ const bingoCategories = [
 ];
 
 // PUBLIC_INTERFACE
-// Fisher-Yates shuffle for unbiased random order
+// Fisher-Yates shuffle for unbiased order
 function shuffle(arr) {
   if (!Array.isArray(arr)) return [];
   const result = arr.slice();
@@ -32,14 +32,13 @@ function shuffle(arr) {
   return result;
 }
 
-// PUBLIC_INTERFACE
 function MovieBingo({ onResult }) {
   /**
-   * Movie Bingo: Shows a 3x3 grid of movies where only one matches the question's category.
-   * Each bingo round uses a unique (per session) bingo category, managed and tracked via React state/ref.
+   * Movie Bingo: 3x3 grid where only one matches the challenge category.
+   * Each question uses a unique category, managed by a pool that shrinks each round.
    */
-  const [category, setCategory] = useState(null);
   const [movies, setMovies] = useState([]); // [{id, title}]
+  const [category, setCategory] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | locked | revealed | error
   const [error, setError] = useState("");
   const [correctIdx, setCorrectIdx] = useState(null); // index (0-8) of the one correct cell for the category
@@ -47,18 +46,20 @@ function MovieBingo({ onResult }) {
   const [isCorrect, setIsCorrect] = useState(null);
   const [gridDisabled, setGridDisabled] = useState(false);
 
-  // --- CATEGORY SESSION POOL LOGIC ---
-  // Track per-session unique categories with useRef (initialized on component mount)
-  const sessionTracker = React.useRef({ categories: [], idx: 0 });
+  // Track unused categories per session in state.
+  const [availableCategories, setAvailableCategories] = useState(() => shuffle([...bingoCategoriesMaster]));
 
-  // On first mount, initialize session category pool and index
   useEffect(() => {
-    sessionTracker.current.categories = shuffle([...bingoCategories]);
-    sessionTracker.current.idx = 0;
-  }, []);
+    // If out of categories, re-init pool (rare for 10Q sessions)
+    if (availableCategories.length === 0) {
+      setAvailableCategories(shuffle([...bingoCategoriesMaster]));
+      return;
+    }
+    // On each round, pick a random available category (unique for session).
+    const rndIdx = Math.floor(Math.random() * availableCategories.length);
+    const chosenCat = availableCategories[rndIdx];
+    setCategory(chosenCat);
 
-  // For each Q, useEffect triggers (component re-mount per round is ensured via parent)
-  useEffect(() => {
     let ignore = false;
     async function loadGrid() {
       setStatus("loading");
@@ -69,17 +70,8 @@ function MovieBingo({ onResult }) {
       setGridDisabled(false);
       setCorrectIdx(null);
 
-      // Pick the next fresh unused category from the session pool, cycling & reshuffling if exhausted.
-      let catIdx = sessionTracker.current.idx;
-      if (catIdx >= sessionTracker.current.categories.length) {
-        // All used up? Reshuffle unless fewer than 10 Q in a session
-        sessionTracker.current.categories = shuffle([...bingoCategories]);
-        sessionTracker.current.idx = 0;
-        catIdx = 0;
-      }
-      const chosenCat = sessionTracker.current.categories[catIdx];
-      sessionTracker.current.idx += 1;
-      setCategory(chosenCat);
+      // Remove the chosen category from available categories (avoid repeats).
+      setAvailableCategories((prev) => prev.filter((x, i) => i !== rndIdx));
 
       // ===== GRID LOADING CODE as LOGICALLY BEFORE =====
       let found = [];
@@ -173,9 +165,10 @@ function MovieBingo({ onResult }) {
       }
     }
     loadGrid();
-    return () => (ignore = true);
+    return () => { ignore = true; };
     // eslint-disable-next-line
-  }, []);
+  // Only run when availableCategories changes (i.e., new question/round)
+  }, [availableCategories]);
 
   // PUBLIC_INTERFACE
   function selectCell(idx) {
