@@ -23,3 +23,21 @@ modules by path ./.ve/ 15.1 KiB
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
 webpack 5.99.9 compiled successfully in 1478 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.57 MiB
+  asset bundle.js 1.48 MiB [emitted] (name: main)
+  asset main.c13ad196c8e191e79fa6.hot-update.js 92.8 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.c13ad196c8e191e79fa6.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.57 MiB = bundle.js 1.48 MiB main.c13ad196c8e191e79fa6.hot-update.js 92.8 KiB
+cached modules 1.26 MiB [cached] 41 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 67.7 KiB
+  ./src/App.js 15.6 KiB [built] [code generated]
+  ./src/BlurredPosterQuiz.js 8.41 KiB [built] [code generated]
+  ./src/CharacterMovieMatch.js 7.89 KiB [built] [code generated]
+  ./src/MovieBingo.js 7.54 KiB [built] [code generated]
+  ./src/MovieTimelineChallenge.js 7.25 KiB [built] [code generated]
+  ./src/SpinTheWheel.js 8.99 KiB [built] [code generated]
+  ./src/CastCombo.js 9.94 KiB [built] [code generated]
+  ./src/tmdbApi.js 2.11 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 462 ms
