@@ -92,49 +92,90 @@ function CharacterMovieMatch() {
     setShowClues(false); setReveal(false); setFeedback("");
     let didCancel = false; // race check
 
+    // Returns true if name is a generic placeholder (e.g. 'Unknown')
+    function isGenericCharacterName(name) {
+      if (!name) return true;
+      const lc = name.trim().toLowerCase();
+      // Filter out blanks, single letters, generic "man", "woman", etc.
+      if (
+        !lc ||
+        lc === "unknown" ||
+        lc === "n/a" ||
+        lc === "none" ||
+        lc === "null" ||
+        lc === "character" ||
+        lc === "self" ||
+        lc === "himself" ||
+        lc === "herself" ||
+        lc === "uncredited" ||
+        lc === "(uncredited)" ||
+        lc.length < MIN_CHAR_LENGTH
+      ) return true;
+      // Add additional generics as needed:
+      const blockList = [
+        'police', 'doctor', 'man', 'woman', 'boy', 'girl', 'child', 'cop', 'waiter', 'driver', 'audience', 'guest',
+        'villager', 'guard'
+      ];
+      for (let blk of blockList) {
+        if (lc === blk || lc.startsWith(blk+' ') || lc.endsWith(' '+blk)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     async function setupRound() {
       // 1. Pick 4 unique, unused movies for this round.
       // If out of new movies, we should stop progressing.
       const availableMovies = allAvailableMovies.filter(m => !usedMovieIds.includes(m.id));
       if (availableMovies.length < MOVIES_PER_ROUND) {
         endOfQuestions.current = true;
-        setGamesCount(round+1); // Only display as many rounds as loaded
+        setGamesCount(round + 1); // Only display as many rounds as loaded
         setLoading(false);
         return;
       }
       // Sample 4 random unique movies
       const pickedMovies = shuffleArray(availableMovies).slice(0, MOVIES_PER_ROUND);
-      // For each, fetch cast and pick a unique character name not yet used
+      // For each, fetch cast and pick a unique, relevant character name not yet used
       let prepared = [];
       let roundCharNames = [];
       let tried = 0;
       for (let m of pickedMovies) {
         tried++;
         const cast = await getMovieCast(m.id).catch(() => []);
-        // deduplicate and filter
+        // deduplicate and filter to relevant character names (non-empty, not generic, not previously used)
         let validChars = Array.from(
           new Set(
             (cast || [])
-              .filter(c => c && c.character && typeof c.character === "string" && c.character.length >= MIN_CHAR_LENGTH)
+              .filter(c =>
+                c &&
+                c.character &&
+                typeof c.character === "string" &&
+                !isGenericCharacterName(c.character) &&
+                c.character.trim().length >= MIN_CHAR_LENGTH
+              )
               .map(c => c.character)
-              .filter(str => 
-                !str.toLowerCase().includes("himself") &&
-                !str.toLowerCase().includes("herself") &&
-                !str.toLowerCase().includes("uncredited"))
           )
         );
-
-        // Remove characters seen in all previous rounds.
-        validChars = validChars.filter(c => 
+        // Remove characters seen in all previous rounds and this round
+        validChars = validChars.filter(c =>
           !usedCharacters.includes(c.trim().toLowerCase()) &&
           !roundCharNames.includes(c.trim().toLowerCase())
         );
-
-        if (validChars.length === 0) {
-          continue; // try next
+        // If still not enough, take at least the first non-generic
+        if (validChars.length === 0 && Array.isArray(cast)) {
+          for (const candidate of cast) {
+            if (candidate.character && !isGenericCharacterName(candidate.character)) {
+              validChars = [candidate.character];
+              break;
+            }
+          }
         }
-        // Pick one clue for this movie for this round
-        const character = validChars[Math.floor(Math.random()*validChars.length)];
+        if (validChars.length === 0) {
+          continue; // try next movie
+        }
+        // Pick one character for this movie for this round
+        const character = validChars[Math.floor(Math.random() * validChars.length)];
         roundCharNames.push(character.trim().toLowerCase());
         prepared.push({
           ...m,
@@ -147,16 +188,18 @@ function CharacterMovieMatch() {
       if (prepared.length < MOVIES_PER_ROUND) {
         // Mark as end (shouldn't typically trigger)
         endOfQuestions.current = true;
-        setGamesCount(round+1);
+        setGamesCount(round + 1);
         setLoading(false);
         return;
       }
 
       // Build clues: shuffle clues for drag-arrangement
-      const roundClues = shuffleArray(prepared.map(m => ({
-        character: m.correctCharacter,
-        movieId: m.id
-      })));
+      const roundClues = shuffleArray(
+        prepared.map(m => ({
+          character: m.correctCharacter,
+          movieId: m.id
+        }))
+      );
 
       // If not cancelled, set state
       if (!didCancel) {
@@ -167,7 +210,7 @@ function CharacterMovieMatch() {
       }
     }
     setupRound();
-    return ()=>{ didCancel = true; }
+    return () => { didCancel = true; }
     // eslint-disable-next-line
   }, [round, allAvailableMovies]); // triggers on initial load or round increment
 
