@@ -27,10 +27,11 @@ function CastCombo({ onResult }) {
       setCorrect(null);
       setOptions([]);
       // Randomly pick mode: normal or odd-one-out
-      setMode(Math.random() > 0.5 ? "combo" : "oddone");
+      const chosenMode = Math.random() > 0.5 ? "combo" : "oddone";
+      setMode(chosenMode);
       try {
         // For 'combo' mode: pick a movie, get 2-3 actor names, ask for movie.
-        if (mode === "combo") {
+        if (chosenMode === "combo") {
           let data = await fetchPopularKollywoodMovies(1 + Math.floor(Math.random() * 2));
           let mIdx = Math.floor(Math.random() * data.results.length);
           let m = data.results[mIdx];
