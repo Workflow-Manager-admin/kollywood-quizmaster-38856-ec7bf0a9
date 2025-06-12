@@ -324,9 +324,15 @@ function GameRunner({ user, gameKey, onBackToDashboard }) {
         {gameMeta.icon} {gameMeta.name}
       </div>
       <ProgressBar current={step + 1} total={10} />
-      {gameKey === "movie-bingo" ? (
-        <MovieBingo key={step} {...quizProps} />
-      ) : (
+      {gameKey === "movie-bingo" && (
+        <MovieBingo
+          key={step}
+          availableCategories={quizProps.availableCategories}
+          setAvailableCategories={quizProps.setAvailableCategories}
+          onResult={quizProps.onResult}
+        />
+      )}
+      {gameKey !== "movie-bingo" && (
         <QuizComponent key={step} onResult={handleResult} />
       )}
       <div style={{ textAlign: "center", marginTop: 28, color: "#9ac7fc", fontSize: 13 }}>
