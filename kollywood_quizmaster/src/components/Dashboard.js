@@ -44,7 +44,8 @@ const games = [
 function Dashboard() {
   const navigate = useNavigate();
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", minHeight: 520 }}>
+      {/* Consistent BackButton for major page */}
       <BackButton />
       <section className="kq-dashboard-hero">
         <h1>Welcome! 🎬</h1>

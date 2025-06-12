@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 
 import BackButton from "./BackButton";
+/*
+ * Add prop to optionally hide the Back button, so in login it can be hidden if necessary;
+ * However, per requirements, keep it shown for all main pages including LoginPage for consistency!
+ */
 
 // PUBLIC_INTERFACE
 function LoginPage({ onLogin }) {
@@ -18,7 +22,8 @@ function LoginPage({ onLogin }) {
   }
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", minHeight: 420 }}>
+      {/* Consistently position BackButton in top-left for all main pages */}
       <BackButton />
       <div className="kq-login-panel">
         <div className="kq-login-title">
@@ -26,28 +31,29 @@ function LoginPage({ onLogin }) {
           Kollywood QuizMaster
         </div>
         <form autoComplete="off" onSubmit={handleSubmit}>
-        <label>
-          Username
-          <input
-            type="text"
-            className="kq-input"
-            placeholder="Enter your Kollywood nickname"
-            maxLength={20}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoFocus
-          />
-        </label>
-        {err && (
-          <div style={{ color: "#f604c2", fontSize: "1.03rem" }}>{err}</div>
-        )}
-        <button type="submit" className="kq-btn" style={{ width: "100%", marginTop: 16 }}>
-          Start Playing!
-        </button>
-      </form>
-      <div style={{ color: "#222", opacity: 0.62, textAlign: "center", fontSize: "1.04rem" }}>
-        Challenge yourself on Kollywood trivia across 6 quiz games!
+          <label>
+            Username
+            <input
+              type="text"
+              className="kq-input"
+              placeholder="Enter your Kollywood nickname"
+              maxLength={20}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoFocus
+            />
+          </label>
+          {err && (
+            <div style={{ color: "#f604c2", fontSize: "1.03rem" }}>{err}</div>
+          )}
+          <button type="submit" className="kq-btn" style={{ width: "100%", marginTop: 16 }}>
+            Start Playing!
+          </button>
+        </form>
+        <div style={{ color: "#222", opacity: 0.62, textAlign: "center", fontSize: "1.04rem" }}>
+          Challenge yourself on Kollywood trivia across 6 quiz games!
+        </div>
       </div>
     </div>
   );
