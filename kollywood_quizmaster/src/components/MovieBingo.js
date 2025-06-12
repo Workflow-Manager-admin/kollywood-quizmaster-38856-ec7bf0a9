@@ -13,6 +13,7 @@ import { discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
  * and movie properties (release year, genre). Grid always contains 9 (3x3) distinct trivia types if possible.
  */
 import { useNavigate } from "react-router-dom";
+import BackButton from "./BackButton";
 
 // PUBLIC_INTERFACE
 function MovieBingo() {
@@ -448,7 +449,8 @@ function MovieBingoWrapper({ questions, demoMode }) {
 
   // Matches styling from DemoBingo, with Back to Desktop at the end
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <BackButton />
       {demoMode && (
         <div style={{
           background: "#fff7ee",

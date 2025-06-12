@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { discoverTamilMovies, getMovieCast, getPosterUrl } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
+import BackButton from "./BackButton";
 
 /**
  * Game: Character-Movie Match
@@ -306,7 +307,7 @@ function CharacterMovieMatch() {
     setReveal(true);
     setShowClues(true);
     setFeedback(`Round ${round + 1}: You matched ${roundCorrect} of ${MOVIES_PER_ROUND} correctly!`);
-    // 4. Wait and then progress to next round or summary
+    // 4. Wait and then progress to next round or summary screen
     // Mark movies/characters as used (across all game)
     setUsedMovieIds(prev => prev.concat(roundMovies.map(m=>m.id)));
     setUsedCharacters(prev => prev.concat(roundMovies.map(m=>m.correctCharacter.trim().toLowerCase())));
@@ -368,9 +369,7 @@ function CharacterMovieMatch() {
   if (endOfQuestions.current) {
     return (
       <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
-        {gamesCount > 1
-          ? "You've answered all non-repeating movie rounds for this session!"
-          : "Failed to load enough data for a round."}
+        {"You've answered all non-repeating movie rounds for this session!"}
         <br />
         <button className="kq-btn outline" onClick={restartGame}>Retry</button>
       </div>
@@ -385,283 +384,287 @@ function CharacterMovieMatch() {
     );
 
   return (
-    <div className="kq-quiz-panel" tabIndex={-1}>
-      <QuizProgressBar step={round} total={gamesCount} />
-      <div style={{ color: "#222", marginBottom: 9, fontWeight: 600, fontSize: "1.16em" }}>
-        Round {round + 1} of {gamesCount}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* Top: DRAGGABLE CLUES */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 13,
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: 8,
-          }}
-        >
-          {clues.map((clue, idx) => (
+    <div style={{ position: "relative" }}>
+      <BackButton />
+      <div className="kq-quiz-panel" tabIndex={-1}>
+        <QuizProgressBar step={round} total={gamesCount} />
+        <div style={{ color: "#222", marginBottom: 9, fontWeight: 600, fontSize: "1.16em" }}>
+          Round {round + 1} of {gamesCount}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Top: DRAGGABLE CLUES */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 13,
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            {clues.map((clue, idx) => (
+              <button
+                key={clue.character + idx}
+                style={{
+                  borderRadius: 7,
+                  cursor: !isClueAssigned(clue) && !reveal ? "grab" : "not-allowed",
+                  padding: "10px 17px",
+                  background: "#fff",
+                  color: "#f604c2",
+                  border: "2px solid #f604c2",
+                  fontWeight: "bold",
+                  fontSize: "1.08rem",
+                  opacity: isClueAssigned(clue) || reveal ? 0.36 : 1,
+                  pointerEvents: isClueAssigned(clue) || reveal ? "none" : "auto",
+                  userSelect: "none",
+                  outline:
+                    draggedClue === clue.character && !isClueAssigned(clue)
+                      ? "2.5px solid #b51b3b"
+                      : "none",
+                  boxShadow: draggedClue === clue.character ? "0 0 4px #b51b3b88" : "",
+                  transition: "opacity 0.15s, outline 0.18s, box-shadow 0.13s"
+                }}
+                tabIndex={isClueAssigned(clue) || reveal ? -1 : 0}
+                draggable={!isClueAssigned(clue) && !reveal}
+                aria-label={`character ${clue.character}`}
+                onDragStart={(e) => onDragStartClue(e, clue.character)}
+                onDragEnd={onDragEndClue}
+                onKeyDown={(e) => {
+                  // Space/Enter starts drag
+                  if (
+                    !isClueAssigned(clue) &&
+                    !reveal &&
+                    (e.key === "Enter" || e.key === " ")
+                  ) {
+                    setDraggedClue(clue.character);
+                  }
+                }}
+                className="kq-btn outline"
+              >
+                {clue.character}
+              </button>
+            ))}
+          </div>
+          {/* BOTTOM: MOVIE POSTER GRID */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${MOVIES_PER_ROUND}, minmax(122px,1fr))`,
+              gap: "22px",
+              justifyItems: "center",
+              alignItems: "flex-start",
+              marginTop: 9,
+              marginBottom: "7px",
+            }}
+          >
+            {roundMovies.map((movie, idx) => {
+              const assignedCharacter = assignments[movie.id];
+              const isDropTarget = !assignedCharacter && !reveal;
+
+              // === Remove all drag-and-drop feedback/highlights prior to submission/reveal (per requirements) ===
+              // No checkmark, cross, highlight, or indicator before submit or reveal.
+              let dropBorderColor = assignedCharacter
+                ? "#f604c2"
+                : "2px dashed #f604c2";
+              let dropBoxShadow = "";
+              let dropIndicator = null;
+              // (All further drop visual feedback logic removed — only basic border until reveal)
+
+              return (
+                <div
+                  key={movie.id}
+                  tabIndex={isDropTarget ? 0 : -1}
+                  style={{
+                    background: "#faeff9",
+                    borderRadius: "12px",
+                    boxShadow: dropBoxShadow || "var(--kq-shadow)",
+                    padding: 10,
+                    textAlign: "center",
+                    minWidth: 110,
+                    outline: isDropTarget && draggedClue ? "2.0px solid #f604c2" : undefined
+                  }}
+                  // To allow dynamic border and feedback
+                  onDragOver={
+                    isDropTarget
+                      ? (e) => {
+                          e.preventDefault();
+                          // Optionally: update some feedback state if more dynamic changes needed
+                        }
+                      : undefined
+                  }
+                  onDrop={isDropTarget ? (e) => onDropPoster(e, movie.id) : undefined}
+                  aria-dropeffect={isDropTarget ? "move" : undefined}
+                  onKeyUp={
+                    isDropTarget && draggedClue
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            assignClueToPoster(draggedClue, movie.id);
+                            setDraggedClue(null);
+                          }
+                        }
+                      : undefined
+                  }
+                >
+                  <img
+                    src={getPosterUrl(movie.poster_path, "w185")}
+                    alt={movie.title}
+                    style={{
+                      width: 105,
+                      height: 158,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      marginBottom: 7,
+                      border: assignedCharacter
+                        ? "3px solid #f604c2"
+                        : dropBorderColor,
+                      background: "#ddd",
+                      transition: "border 0.18s, box-shadow 0.18s",
+                      opacity: reveal ? 0.84 : 1,
+                    }}
+                    draggable={false}
+                  />
+                  <div
+                    style={{
+                      minHeight: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: assignedCharacter ? 700 : 400,
+                      color: "#0b0a0a",
+                      marginBottom: 4,
+                    }}
+                    aria-live="polite"
+                  >
+                    {assignedCharacter && (
+                      <span>
+                        🏷️ <b>{assignedCharacter}</b>
+                      </span>
+                    )}
+                    {!assignedCharacter && (
+                      <span
+                        style={{
+                          color: "#aaa",
+                          opacity: 0.63,
+                          fontSize: "0.97em",
+                          fontWeight: 400,
+                          display: "flex",
+                          alignItems: "center"
+                        }}
+                      >
+                        {isDropTarget && !reveal
+                          ? "Drop clue here"
+                          : "—"
+                        }
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 4,
+                      color: "#222",
+                      fontSize: 13,
+                      minHeight: 36,
+                    }}
+                  >
+                    <b>{movie.title}</b>
+                  </div>
+                  {reveal && (
+                    <div
+                      style={{
+                        marginTop: 2,
+                        color:
+                          assignments[movie.id] === movie.correctCharacter
+                            ? "#1b9e38"
+                            : "#b51b3b",
+                        fontWeight: "bold",
+                        minHeight: 18,
+                      }}
+                    >
+                      {assignments[movie.id] === movie.correctCharacter
+                        ? "✅ Correct!"
+                        : (
+                          <span>
+                            ❌
+                            <span style={{ fontWeight: 400, marginLeft: 4 }}>
+                              Ans: {movie.correctCharacter}
+                            </span>
+                          </span>
+                        )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="kq-quiz-action-bar" style={{ marginTop: 9 }}>
             <button
-              key={clue.character + idx}
+              className="kq-quiz-answer-btn"
+              onClick={() => setShowClues((v) => !v)}
+              disabled={showClues || reveal}
+            >
+              {showClues ? "Clue shown" : "Show Clue"}
+            </button>
+            <button
+              className="kq-quiz-answer-btn reveal"
+              onClick={handleReveal}
+              disabled={reveal}
+            >
+              Reveal
+            </button>
+            <button
+              className="kq-quiz-answer-btn"
+              onClick={handleSubmit}
+              disabled={!allAssigned || reveal}
+            >
+              Submit
+            </button>
+          </div>
+          {/* New centered undo button under main grid */}
+          <div style={{ display: "flex", justifyContent: "center", margin: "18px 0 -2px 0" }}>
+            <button
+              className="kq-btn outline"
               style={{
-                borderRadius: 7,
-                cursor: !isClueAssigned(clue) && !reveal ? "grab" : "not-allowed",
-                padding: "10px 17px",
-                background: "#fff",
+                minWidth: 120,
                 color: "#f604c2",
                 border: "2px solid #f604c2",
                 fontWeight: "bold",
-                fontSize: "1.08rem",
-                opacity: isClueAssigned(clue) || reveal ? 0.36 : 1,
-                pointerEvents: isClueAssigned(clue) || reveal ? "none" : "auto",
-                userSelect: "none",
-                outline:
-                  draggedClue === clue.character && !isClueAssigned(clue)
-                    ? "2.5px solid #b51b3b"
-                    : "none",
-                boxShadow: draggedClue === clue.character ? "0 0 4px #b51b3b88" : "",
-                transition: "opacity 0.15s, outline 0.18s, box-shadow 0.13s"
+                borderRadius: 7,
+                opacity: Object.keys(assignments).length === 0 || reveal ? 0.45 : 1,
+                cursor: Object.keys(assignments).length === 0 || reveal ? "not-allowed" : "pointer",
+                pointerEvents: Object.keys(assignments).length === 0 || reveal ? "none" : "auto"
               }}
-              tabIndex={isClueAssigned(clue) || reveal ? -1 : 0}
-              draggable={!isClueAssigned(clue) && !reveal}
-              aria-label={`character ${clue.character}`}
-              onDragStart={(e) => onDragStartClue(e, clue.character)}
-              onDragEnd={onDragEndClue}
-              onKeyDown={(e) => {
-                // Space/Enter starts drag
-                if (
-                  !isClueAssigned(clue) &&
-                  !reveal &&
-                  (e.key === "Enter" || e.key === " ")
-                ) {
-                  setDraggedClue(clue.character);
-                }
-              }}
-              className="kq-btn outline"
+              onClick={undoLastAssignment}
+              disabled={Object.keys(assignments).length === 0 || reveal}
+              aria-label="Undo last clue match"
             >
-              {clue.character}
+              ⬅️ Undo Last Match
             </button>
-          ))}
-        </div>
-        {/* BOTTOM: MOVIE POSTER GRID */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${MOVIES_PER_ROUND}, minmax(122px,1fr))`,
-            gap: "22px",
-            justifyItems: "center",
-            alignItems: "flex-start",
-            marginTop: 9,
-            marginBottom: "7px",
-          }}
-        >
-          {roundMovies.map((movie, idx) => {
-            const assignedCharacter = assignments[movie.id];
-            const isDropTarget = !assignedCharacter && !reveal;
-
-            // === Remove all drag-and-drop feedback/highlights prior to submission/reveal (per requirements) ===
-            // No checkmark, cross, highlight, or indicator before submit or reveal.
-            let dropBorderColor = assignedCharacter
-              ? "#f604c2"
-              : "2px dashed #f604c2";
-            let dropBoxShadow = "";
-            let dropIndicator = null;
-            // (All further drop visual feedback logic removed — only basic border until reveal)
-
-            return (
-              <div
-                key={movie.id}
-                tabIndex={isDropTarget ? 0 : -1}
-                style={{
-                  background: "#faeff9",
-                  borderRadius: "12px",
-                  boxShadow: dropBoxShadow || "var(--kq-shadow)",
-                  padding: 10,
-                  textAlign: "center",
-                  minWidth: 110,
-                  outline: isDropTarget && draggedClue ? "2.0px solid #f604c2" : undefined
-                }}
-                // To allow dynamic border and feedback
-                onDragOver={
-                  isDropTarget
-                    ? (e) => {
-                        e.preventDefault();
-                        // Optionally: update some feedback state if more dynamic changes needed
-                      }
-                    : undefined
-                }
-                onDrop={isDropTarget ? (e) => onDropPoster(e, movie.id) : undefined}
-                aria-dropeffect={isDropTarget ? "move" : undefined}
-                onKeyUp={
-                  isDropTarget && draggedClue
-                    ? (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          assignClueToPoster(draggedClue, movie.id);
-                          setDraggedClue(null);
-                        }
-                      }
-                    : undefined
-                }
-              >
-                <img
-                  src={getPosterUrl(movie.poster_path, "w185")}
-                  alt={movie.title}
-                  style={{
-                    width: 105,
-                    height: 158,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    marginBottom: 7,
-                    border: assignedCharacter
-                      ? "3px solid #f604c2"
-                      : dropBorderColor,
-                    background: "#ddd",
-                    transition: "border 0.18s, box-shadow 0.18s",
-                    opacity: reveal ? 0.84 : 1,
-                  }}
-                  draggable={false}
-                />
-                <div
-                  style={{
-                    minHeight: "32px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: assignedCharacter ? 700 : 400,
-                    color: "#0b0a0a",
-                    marginBottom: 4,
-                  }}
-                  aria-live="polite"
-                >
-                  {assignedCharacter && (
-                    <span>
-                      🏷️ <b>{assignedCharacter}</b>
-                    </span>
-                  )}
-                  {!assignedCharacter && (
-                    <span
-                      style={{
-                        color: "#aaa",
-                        opacity: 0.63,
-                        fontSize: "0.97em",
-                        fontWeight: 400,
-                        display: "flex",
-                        alignItems: "center"
-                      }}
-                    >
-                      {isDropTarget && !reveal
-                        ? "Drop clue here"
-                        : "—"
-                      }
-                    </span>
-                  )}
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    color: "#222",
-                    fontSize: 13,
-                    minHeight: 36,
-                  }}
-                >
-                  <b>{movie.title}</b>
-                </div>
-                {reveal && (
-                  <div
-                    style={{
-                      marginTop: 2,
-                      color:
-                        assignments[movie.id] === movie.correctCharacter
-                          ? "#1b9e38"
-                          : "#b51b3b",
-                      fontWeight: "bold",
-                      minHeight: 18,
-                    }}
-                  >
-                    {assignments[movie.id] === movie.correctCharacter
-                      ? "✅ Correct!"
-                      : (
-                        <span>
-                          ❌
-                          <span style={{ fontWeight: 400, marginLeft: 4 }}>
-                            Ans: {movie.correctCharacter}
-                          </span>
-                        </span>
-                      )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="kq-quiz-action-bar" style={{ marginTop: 9 }}>
-          <button
-            className="kq-quiz-answer-btn"
-            onClick={() => setShowClues((v) => !v)}
-            disabled={showClues || reveal}
-          >
-            {showClues ? "Clue shown" : "Show Clue"}
-          </button>
-          <button
-            className="kq-quiz-answer-btn reveal"
-            onClick={handleReveal}
-            disabled={reveal}
-          >
-            Reveal
-          </button>
-          <button
-            className="kq-quiz-answer-btn"
-            onClick={handleSubmit}
-            disabled={!allAssigned || reveal}
-          >
-            Submit
-          </button>
-        </div>
-        {/* New centered undo button under main grid */}
-        <div style={{ display: "flex", justifyContent: "center", margin: "18px 0 -2px 0" }}>
-          <button
-            className="kq-btn outline"
-            style={{
-              minWidth: 120,
-              color: "#f604c2",
-              border: "2px solid #f604c2",
-              fontWeight: "bold",
-              borderRadius: 7,
-              opacity: Object.keys(assignments).length === 0 || reveal ? 0.45 : 1,
-              cursor: Object.keys(assignments).length === 0 || reveal ? "not-allowed" : "pointer",
-              pointerEvents: Object.keys(assignments).length === 0 || reveal ? "none" : "auto"
-            }}
-            onClick={undoLastAssignment}
-            disabled={Object.keys(assignments).length === 0 || reveal}
-            aria-label="Undo last clue match"
-          >
-            ⬅️ Undo Last Match
-          </button>
-        </div>
-        {showClues && (
-          <div className="kq-quiz-clues" style={{ marginTop: 8 }}>
-            <span>
-              <b>Tip:</b> Drag a character clue above onto its movie poster below. Use the Undo button below to remove your last assigned clue before submitting!
-            </span>
           </div>
-        )}
-        {(reveal || feedback) && (
-          <div
-            style={{
-              color: reveal ? "#b51b3b" : "#222",
-              marginTop: 14,
-              textAlign: "center",
-              fontWeight: 600,
-            }}
-          >
-            {feedback}
-          </div>
-        )}
+          {showClues && (
+            <div className="kq-quiz-clues" style={{ marginTop: 8 }}>
+              <span>
+                <b>Tip:</b> Drag a character clue above onto its movie poster below. Use the Undo button below to remove your last assigned clue before submitting!
+              </span>
+            </div>
+          )}
+          {(reveal || feedback) && (
+            <div
+              style={{
+                color: reveal ? "#b51b3b" : "#222",
+                marginTop: 14,
+                textAlign: "center",
+                fontWeight: 600,
+              }}
+            >
+              {feedback}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 export default CharacterMovieMatch;
+

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import BackButton from "./BackButton";
 
 const games = [
   {
@@ -40,11 +41,11 @@ const games = [
   },
 ];
 
-// PUBLIC_INTERFACE
 function Dashboard() {
   const navigate = useNavigate();
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <BackButton />
       <section className="kq-dashboard-hero">
         <h1>Welcome! 🎬</h1>
         <div style={{ fontWeight: 500, color: "#0b0a0a" }}>

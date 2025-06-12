@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import BackButton from "./BackButton";
 
 // PUBLIC_INTERFACE
 function GameSummary() {
@@ -51,19 +52,22 @@ function GameSummary() {
   };
 
   return (
-    <div className="kq-results-summary">
-      <h2>
-        {titleMap[gameType] || "Quiz"} - Results
-      </h2>
-      <div className="kq-results-detail">
-        {total
-          ? `You scored ${score} out of ${total}.`
-          : "Thank you for playing!"}
+    <div style={{ position: "relative" }}>
+      <BackButton />
+      <div className="kq-results-summary">
+        <h2>
+          {titleMap[gameType] || "Quiz"} - Results
+        </h2>
+        <div className="kq-results-detail">
+          {total
+            ? `You scored ${score} out of ${total}.`
+            : "Thank you for playing!"}
+        </div>
+        <div style={{ margin: "9px 0 18px 0" }}>{details}</div>
+        <button className="kq-btn" onClick={() => navigate("/")}>
+          Back to Dashboard
+        </button>
       </div>
-      <div style={{ margin: "9px 0 18px 0" }}>{details}</div>
-      <button className="kq-btn" onClick={() => navigate("/")}>
-        Back to Dashboard
-      </button>
     </div>
   );
 }

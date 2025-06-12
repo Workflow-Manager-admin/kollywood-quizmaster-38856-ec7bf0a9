@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+import BackButton from "./BackButton";
+
 // PUBLIC_INTERFACE
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -16,12 +18,14 @@ function LoginPage({ onLogin }) {
   }
 
   return (
-    <div className="kq-login-panel">
-      <div className="kq-login-title">
-        <span style={{ fontSize: "2.0rem", marginRight: "8px" }}>🎬</span>
-        Kollywood QuizMaster
-      </div>
-      <form autoComplete="off" onSubmit={handleSubmit}>
+    <div style={{ position: "relative" }}>
+      <BackButton />
+      <div className="kq-login-panel">
+        <div className="kq-login-title">
+          <span style={{ fontSize: "2.0rem", marginRight: "8px" }}>🎬</span>
+          Kollywood QuizMaster
+        </div>
+        <form autoComplete="off" onSubmit={handleSubmit}>
         <label>
           Username
           <input

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
+import BackButton from "./BackButton";
 
 /**
  * SpinTheWheel: Shows a spinning wheel split into 10 Q1–Q10 segments.
@@ -210,7 +211,8 @@ function SpinTheWheel() {
   const allSpun = results.length >= TOTAL;
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <BackButton />
       <div className="kq-quiz-panel" style={{ maxWidth: 440, minHeight: 440, position: "relative" }}>
         <QuizProgressBar step={results.length} total={TOTAL} />
         {!revealed ? (

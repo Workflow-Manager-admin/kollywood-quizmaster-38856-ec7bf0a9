@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getPosterUrl, discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
 import QuizProgressBar from "./QuizProgressBar";
 import { useNavigate } from "react-router-dom";
+import BackButton from "./BackButton";
 
 /**
  * Game: Blurred Poster Quiz
@@ -117,7 +118,8 @@ function BlurredPosterQuiz() {
 
   const q = questions[step];
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <BackButton />
       <div className="kq-quiz-panel">
         <QuizProgressBar step={step} total={TOTAL} />
         <img

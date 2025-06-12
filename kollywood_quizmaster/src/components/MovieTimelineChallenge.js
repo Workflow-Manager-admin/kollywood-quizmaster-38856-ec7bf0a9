@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { discoverTamilMovies, getMovieDetails } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
+import BackButton from "./BackButton";
 
 /**
  * Game: Movie Timeline Challenge
@@ -251,128 +252,132 @@ function MovieTimelineChallenge() {
     );
 
   return (
-    <div className="kq-quiz-panel">
-      <QuizProgressBar step={round} total={totalRounds} />
-      <h2 style={{ color: "#f604c2", textAlign: "center" }}>
-        Arrange the movies in correct release order (oldest → newest)
-      </h2>
-      <div style={{ textAlign: "center", margin: "0 0 12px 0", fontSize: "1.06em" }}>
-        <span style={{ color: "#0b0a0a" }}>
-          Kollywood movies – round {round + 1} of {totalRounds}
-        </span>
-      </div>
-      {showClues && (
-        <div className="kq-quiz-clues">
-          <span>
-            Hint: Use year, cast, or your Kollywood intuition! All movies are guaranteed Tamil releases.
+    <div style={{ position: "relative" }}>
+      <BackButton />
+      <div className="kq-quiz-panel">
+        <QuizProgressBar step={round} total={totalRounds} />
+        <h2 style={{ color: "#f604c2", textAlign: "center" }}>
+          Arrange the movies in correct release order (oldest → newest)
+        </h2>
+        <div style={{ textAlign: "center", margin: "0 0 12px 0", fontSize: "1.06em" }}>
+          <span style={{ color: "#0b0a0a" }}>
+            Kollywood movies – round {round + 1} of {totalRounds}
           </span>
         </div>
-      )}
-      <ol style={{ paddingLeft: 0, listStyle: "none" }}>
-        {order.map((m, idx) => (
-          <li
-            key={m.id}
-            style={{
-              marginTop: 9,
-              background: "#faeff9",
-              padding: "12px",
-              borderRadius: 7,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontWeight: 600,
-              color: "#b51b3b",
-              fontSize: "1.11em"
-            }}
-          >
-            <span style={{ flex: 1 }}>
-              {m.title}
-              {/* Optionally show year for stricter clues or after reveal */}
-              {reveal && (
-                <span style={{ color: "#807", fontWeight: 400, marginLeft: 7 }}>
-                  ({m.release_date.slice(0, 4)})
-                </span>
-              )}
+        {showClues && (
+          <div className="kq-quiz-clues">
+            <span>
+              Hint: Use year, cast, or your Kollywood intuition! All movies are guaranteed Tamil releases.
             </span>
-            <span style={{ color: "#bbb", marginLeft: 13 }}>
-              {submitted && (
-                <b>
-                  {result[idx]?.correct ? "✔️" : "❌"}
-                </b>
-              )}
-            </span>
-            <div style={{ display: "flex", gap: 6, marginLeft: "7px" }}>
-              <button
-                style={{ background: "#f604c2", color: "#fff", border: "none", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}
-                disabled={idx === 0 || submitted}
-                onClick={() => move(idx, -1)}
-                tabIndex={0}
-                aria-label={`Move ${m.title} up in order`}
-              >
-                ↑
-              </button>
-              <button
-                style={{ background: "#f604c2", color: "#fff", border: "none", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}
-                disabled={idx === order.length - 1 || submitted}
-                onClick={() => move(idx, 1)}
-                tabIndex={0}
-                aria-label={`Move ${m.title} down in order`}
-              >
-                ↓
-              </button>
-            </div>
-          </li>
-        ))}
-      </ol>
+          </div>
+        )}
+        <ol style={{ paddingLeft: 0, listStyle: "none" }}>
+          {order.map((m, idx) => (
+            <li
+              key={m.id}
+              style={{
+                marginTop: 9,
+                background: "#faeff9",
+                padding: "12px",
+                borderRadius: 7,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontWeight: 600,
+                color: "#b51b3b",
+                fontSize: "1.11em"
+              }}
+            >
+              <span style={{ flex: 1 }}>
+                {m.title}
+                {/* Optionally show year for stricter clues or after reveal */}
+                {reveal && (
+                  <span style={{ color: "#807", fontWeight: 400, marginLeft: 7 }}>
+                    ({m.release_date.slice(0, 4)})
+                  </span>
+                )}
+              </span>
+              <span style={{ color: "#bbb", marginLeft: 13 }}>
+                {submitted && (
+                  <b>
+                    {result[idx]?.correct ? "✔️" : "❌"}
+                  </b>
+                )}
+              </span>
+              <div style={{ display: "flex", gap: 6, marginLeft: "7px" }}>
+                <button
+                  style={{ background: "#f604c2", color: "#fff", border: "none", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}
+                  disabled={idx === 0 || submitted}
+                  onClick={() => move(idx, -1)}
+                  tabIndex={0}
+                  aria-label={`Move ${m.title} up in order`}
+                >
+                  ↑
+                </button>
+                <button
+                  style={{ background: "#f604c2", color: "#fff", border: "none", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}
+                  disabled={idx === order.length - 1 || submitted}
+                  onClick={() => move(idx, 1)}
+                  tabIndex={0}
+                  aria-label={`Move ${m.title} down in order`}
+                >
+                  ↓
+                </button>
+              </div>
+            </li>
+          ))}
+        </ol>
 
-      <div className="kq-quiz-action-bar" style={{ marginTop: 14 }}>
-        <button
-          className="kq-quiz-answer-btn"
-          onClick={() => setShowClues(true)}
-          disabled={showClues || submitted}>
-          Show Clue
-        </button>
-        <button
-          className="kq-quiz-answer-btn reveal"
-          onClick={() => setReveal(true)}
-          disabled={reveal}
-        >
-          Reveal
-        </button>
-        <button
-          className="kq-quiz-answer-btn"
-          onClick={handleSubmit}
-          disabled={submitted}
-        >
-          Submit
-        </button>
+        <div className="kq-quiz-action-bar" style={{ marginTop: 14 }}>
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={() => setShowClues(true)}
+            disabled={showClues || submitted}>
+            Show Clue
+          </button>
+          <button
+            className="kq-quiz-answer-btn reveal"
+            onClick={() => setReveal(true)}
+            disabled={reveal}
+          >
+            Reveal
+          </button>
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={handleSubmit}
+            disabled={submitted}
+          >
+            Submit
+          </button>
+        </div>
+        {reveal && (
+          <div style={{ marginTop: 12, color: "#b51b3b" }}>
+            <b>Correct Order:</b>{" "}
+            {[...roundMovies]
+              .sort((a, b) => new Date(a.release_date) - new Date(b.release_date))
+              .map((m) => `${m.title} (${m.release_date.slice(0,4)})`)
+              .join(" → ")}
+          </div>
+        )}
+        {submitted && round + 1 < totalRounds && usedMovieIds.length + MOVIES_PER_ROUND < pool.length && (
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <button className="kq-btn" onClick={handleNextRound} style={{ fontSize: "1.08em", padding: "7px 28px" }}>
+              Next Timeline Round
+            </button>
+          </div>
+        )}
+        {submitted && (usedMovieIds.length + MOVIES_PER_ROUND >= pool.length || round + 1 >= totalRounds) && (
+          <div style={{ marginTop: 18, color: "#137b2c", textAlign: "center", fontWeight: "600" }}>
+            <span role="img" aria-label="trophy">🏆</span> All unique Kollywood timeline rounds finished!<br />
+            <button className="kq-btn outline" onClick={startOver} style={{ fontSize: "1.05em", marginTop: 8 }}>
+              Play Again!
+            </button>
+          </div>
+        )}
       </div>
-      {reveal && (
-        <div style={{ marginTop: 12, color: "#b51b3b" }}>
-          <b>Correct Order:</b>{" "}
-          {[...roundMovies]
-            .sort((a, b) => new Date(a.release_date) - new Date(b.release_date))
-            .map((m) => `${m.title} (${m.release_date.slice(0,4)})`)
-            .join(" → ")}
-        </div>
-      )}
-      {submitted && round + 1 < totalRounds && usedMovieIds.length + MOVIES_PER_ROUND < pool.length && (
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          <button className="kq-btn" onClick={handleNextRound} style={{ fontSize: "1.08em", padding: "7px 28px" }}>
-            Next Timeline Round
-          </button>
-        </div>
-      )}
-      {submitted && (usedMovieIds.length + MOVIES_PER_ROUND >= pool.length || round + 1 >= totalRounds) && (
-        <div style={{ marginTop: 18, color: "#137b2c", textAlign: "center", fontWeight: "600" }}>
-          <span role="img" aria-label="trophy">🏆</span> All unique Kollywood timeline rounds finished!<br />
-          <button className="kq-btn outline" onClick={startOver} style={{ fontSize: "1.05em", marginTop: 8 }}>
-            Play Again!
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
 export default MovieTimelineChallenge;
+

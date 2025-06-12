@@ -307,19 +307,21 @@ function CastCombo() {
     );
 
   return (
-    <div className="kq-quiz-panel">
-      <QuizProgressBar step={step} total={TOTAL} />
-      {combo.notIn ? (
-        <div style={{ color: "#0b0a0a", marginBottom: 8 }}>
-          <b>Pick the actor <span style={{ color: "#b51b3b" }}>NOT</span> present in: {combo.movie}</b>
-        </div>
-      ) : (
-        <div style={{ color: "#0b0a0a", marginBottom: 8 }}>
-          <b>Guess the movie with these actors:</b>{" "}
-          <span style={{ color: "#f604c2" }}>{combo.actors.join(", ")}</span>
-        </div>
-      )}
-      {combo.notIn ? (
+    <div style={{ position: "relative" }}>
+      <BackButton />
+      <div className="kq-quiz-panel">
+        <QuizProgressBar step={step} total={TOTAL} />
+        {combo.notIn ? (
+          <div style={{ color: "#0b0a0a", marginBottom: 8 }}>
+            <b>Pick the actor <span style={{ color: "#b51b3b" }}>NOT</span> present in: {combo.movie}</b>
+          </div>
+        ) : (
+          <div style={{ color: "#0b0a0a", marginBottom: 8 }}>
+            <b>Guess the movie with these actors:</b>{" "}
+            <span style={{ color: "#f604c2" }}>{combo.actors.join(", ")}</span>
+          </div>
+        )}
+        {combo.notIn ? (
         <div>
           <div className="kq-quiz-action-bar" style={{ flexWrap: "wrap", marginBottom: 8 }}>
             {combo.actors.map((n, idx) => {
