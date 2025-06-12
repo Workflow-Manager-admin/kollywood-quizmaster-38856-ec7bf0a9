@@ -194,7 +194,8 @@ function CastCombo() {
     // eslint-disable-next-line
   }, [step, questions, okkLoaded]);
 
-  function checkAnswer() {
+  // PUBLIC_INTERFACE
+  function checkAnswer(autoAdvance = false) {
     let ok;
     if (combo.notIn) {
       // Pick which actor is not in movie
@@ -207,17 +208,28 @@ function CastCombo() {
       { correct: ok, answer: userAnswer, solution: combo.movie, notIn: combo.notIn },
     ];
     setResults(res);
-    if (step + 1 === TOTAL) {
-      navigate("/summary/cast-combo", { state: { results: res } });
-    } else {
-      setStep(step + 1);
-    }
+    setReveal(true);
+    setShowClues(true);
+    // After feedback, move to next after delay
+    setTimeout(() => {
+      setReveal(false);
+      setShowClues(false);
+      setUserAnswer("");
+      if (step + 1 === TOTAL) {
+        navigate("/summary/cast-combo", { state: { results: res } });
+      } else {
+        setStep(step + 1);
+      }
+    }, 1600); // Feedback visible for 1.6 seconds
   }
 
   function handleReveal() {
+    if (reveal) return;
     setReveal(true);
     setShowClues(true);
-    setTimeout(checkAnswer, 1400);
+    setTimeout(() => {
+      checkAnswer(true);
+    }, 1400);
   }
 
   if ((step === 0 && !okkLoaded) || !combo.actors.length)
@@ -304,7 +316,7 @@ function CastCombo() {
             <button
               className="kq-quiz-answer-btn"
               onClick={() => {
-                if (userAnswer && !reveal) setReveal(true);
+                if (userAnswer && !reveal) checkAnswer(true);
               }}
               disabled={!userAnswer || reveal}
             >
@@ -318,7 +330,7 @@ function CastCombo() {
             className="kq-input"
             placeholder="Movie Title"
             value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
+            onChange={e => !reveal && setUserAnswer(e.target.value)}
             disabled={reveal}
             autoFocus
           />
@@ -338,7 +350,9 @@ function CastCombo() {
           </button>
           <button
             className="kq-quiz-answer-btn"
-            onClick={checkAnswer}
+            onClick={() => {
+              if (!reveal && userAnswer) checkAnswer(true);
+            }}
             disabled={!userAnswer || reveal}
           >
             Submit
@@ -364,6 +378,7 @@ function CastCombo() {
           }}
         >
           {userAnswer === combo.notIn ? "Correct! 🎉" : "Incorrect."}
+          {/* Feedback auto-advance handled in logic above */}
         </div>
       )}
       {reveal && (
