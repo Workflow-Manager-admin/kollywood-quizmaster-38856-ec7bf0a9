@@ -1,26 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { discoverTamilMovies, getMovieCast, getPosterUrl } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
 
 /**
  * Game: Character-Movie Match
- * Show 4 Tamil movie posters with drag-and-drop character name clues.
- * Users drag character names to match the correct movie poster.
- * Character clues appear at the top, movie poster grid at the bottom for clean separation.
+ * Multi-round matching: each round, drag character clues to correct posters.
+ * No movie/character repeats until all exhausted. Accurate scoring/results.
  */
+
 // PUBLIC_INTERFACE
 function CharacterMovieMatch() {
-  const MOVIE_COUNT = 4;
-  const [movies, setMovies] = useState([]);
-  const [characterClues, setCharacterClues] = useState([]); // {character, movieId}
-  const [assignments, setAssignments] = useState({}); // movieId: character
-  const [draggedClue, setDraggedClue] = useState(null); // character name
+  // === CONFIGURABLES ===
+  const MOVIES_PER_ROUND = 4;
+  const MAX_ROUNDS = 3;      // Number of rounds user can play per game session.
+  const MIN_CHAR_LENGTH = 2; // Minimum char clue length for validity.
+
+  // State
+  const [round, setRound] = useState(0);          // round index (0-based)
+  const [gamesCount, setGamesCount] = useState(MAX_ROUNDS); // to display/track more rounds, can be changed per config
+  const [allAvailableMovies, setAllAvailableMovies] = useState([]); // fetched, unshuffled list
+  const [usedMovieIds, setUsedMovieIds] = useState([]);      // ids already used in any round
+  const [usedCharacters, setUsedCharacters] = useState([]);  // characters used across any round
+  const [roundMovies, setRoundMovies] = useState([]);        // {id, title, poster, charOptions, correctCharacter}
+  const [clues, setClues] = useState([]);                    // [{character, movieId}]
+  const [assignments, setAssignments] = useState({});         // movieId: character
+  const [draggedClue, setDraggedClue] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showClues, setShowClues] = useState(false);
   const [reveal, setReveal] = useState(false);
-  const [results, setResults] = useState(null);
+  const [roundResults, setRoundResults] = useState([]); // Array of arrays for each round
+  const [feedback, setFeedback] = useState("");          // Feedback after round
   const navigate = useNavigate();
+
+  // Track if we've exhausted all available movies/characters for playthrough
+  const endOfQuestions = useRef(false);
 
   // Fisher-Yates shuffle for array
   function shuffleArray(arr) {
@@ -32,154 +47,144 @@ function CharacterMovieMatch() {
     return array;
   }
 
-  // Setup/refresh game
+  // INITIAL LOAD: Fetch a large pool of movies once per session (not per round)
   useEffect(() => {
-    let isMounted = true;
-
-    async function setupGame() {
-      setLoading(true);
-      setReveal(false);
-      setShowClues(false);
-      setResults(null);
-      setAssignments({});
-
-      // To avoid repeated titles, use a Set to track picked titles (local to this round)
-      // Try sampling from multiple pages if not enough unique titles
-      const neededMovies = MOVIE_COUNT;
-      let collected = [];
-      let triedTitles = new Set();
-      let page = Math.floor(Math.random() * 25) + 1;
-      // Try up to 6 pages to ensure diversity and non-repeating titles
-      for (let retries = 0; collected.length < neededMovies && retries < 6; retries++) {
-        let tamilMovies = await discoverTamilMovies({
-          page: ((page + retries) % 25) + 1,
-          "vote_count.gte": 7,
-        });
-        tamilMovies = tamilMovies.filter((m) => m.poster_path && m.title && m.id && !triedTitles.has(m.title.trim().toLowerCase()));
-        for (const m of tamilMovies) {
-          const tTitle = m.title.trim().toLowerCase();
-          if (!triedTitles.has(tTitle) && collected.length < neededMovies) {
-            collected.push(m);
-            triedTitles.add(tTitle);
+    let active = true;
+    async function fetchPool() {
+      setLoading(true); setError("");
+      let finalMovies = [];
+      let page = 1;
+      // We'll fetch a number of pages to get enough unique/quality movies.
+      while (finalMovies.length < MOVIES_PER_ROUND * MAX_ROUNDS && page < 30 && active) {
+        let movies = await discoverTamilMovies({ page, "vote_count.gte": 7 });
+        // Filter out entries with no poster/title and unwanted duplicates.
+        movies = movies.filter(m => m.poster_path && m.title && m.id && (typeof m.id === "number" || typeof m.id === "string"));
+        for (const m of movies) {
+          if (!finalMovies.find(mm => mm.id === m.id)) {
+            finalMovies.push(m);
           }
         }
+        page++;
       }
+      if (!active) return;
+      setAllAvailableMovies(finalMovies);
+      setUsedMovieIds([]); // Ensure reset if replay
+      setUsedCharacters([]);
+      setRoundResults([]);
+      setRound(0);
+      setLoading(false);
+    }
+    fetchPool();
+    return () => { active = false; }
+  }, []);
 
-      // Now we have at most four unique-title movies
-      if (collected.length < neededMovies) {
-        // Not enough unique-title movies with posters found, retry after a short pause
-        if (isMounted) setTimeout(setupGame, 700);
+  // Prepare a round (reset clues, assignments, get movies, fetch cast, etc.)
+  useEffect(() => {
+    if (!allAvailableMovies.length) { setLoading(true); return; }
+    setLoading(true); setError("");
+    setAssignments({}); setClues([]); setDraggedClue(null);
+    setShowClues(false); setReveal(false); setFeedback("");
+    let didCancel = false; // race check
+
+    async function setupRound() {
+      // 1. Pick 4 unique, unused movies for this round.
+      // If out of new movies, we should stop progressing.
+      const availableMovies = allAvailableMovies.filter(m => !usedMovieIds.includes(m.id));
+      if (availableMovies.length < MOVIES_PER_ROUND) {
+        endOfQuestions.current = true;
+        setGamesCount(round+1); // Only display as many rounds as loaded
+        setLoading(false);
         return;
       }
-
-      // For each movie, fetch accurate character options from TMDb
-      const withCast = await Promise.all(
-        collected.map(async (m) => {
-          const cast = await getMovieCast(m.id);
-          // Deduplicate and filter for displayable characters
-          const validChars = Array.from(
-            new Set(
-              (Array.isArray(cast) ? cast : [])
-                .filter(
-                  (c) =>
-                    c.character &&
-                    typeof c.character === "string" &&
-                    c.character.length > 1 &&
-                    !c.character.toLowerCase().includes("himself") &&
-                    !c.character.toLowerCase().includes("herself") &&
-                    !c.character.toLowerCase().includes("uncredited")
-                )
-                .map((c) => c.character)
-            )
-          );
-          return {
-            ...m,
-            characterOptions: validChars,
-          };
-        })
-      );
-
-      // Must ensure each movie has at least one valid character clue
-      const moviesWithChar = withCast
-        .filter(
-          (m) => Array.isArray(m.characterOptions) && m.characterOptions.length > 0
-        )
-        // In case two movies have the same featured character, filter for unique characters globally
-        .slice(0, neededMovies);
-
-      if (moviesWithChar.length < neededMovies) {
-        // Not enough valid movies with characters, try again
-        if (isMounted) setTimeout(setupGame, 800);
-        return;
-      }
-
-      // Assign a unique random character clue for each movie, and globally ensure character names do not repeat
-      let usedCharacters = new Set();
-      const chosen = [];
-      for (let m of moviesWithChar) {
-        const charOptions = m.characterOptions.filter(
-          (c) => !usedCharacters.has(c.trim().toLowerCase())
+      // Sample 4 random unique movies
+      const pickedMovies = shuffleArray(availableMovies).slice(0, MOVIES_PER_ROUND);
+      // For each, fetch cast and pick a unique character name not yet used
+      let prepared = [];
+      let roundCharNames = [];
+      let tried = 0;
+      for (let m of pickedMovies) {
+        tried++;
+        const cast = await getMovieCast(m.id).catch(() => []);
+        // deduplicate and filter
+        let validChars = Array.from(
+          new Set(
+            (cast || [])
+              .filter(c => c && c.character && typeof c.character === "string" && c.character.length >= MIN_CHAR_LENGTH)
+              .map(c => c.character)
+              .filter(str => 
+                !str.toLowerCase().includes("himself") &&
+                !str.toLowerCase().includes("herself") &&
+                !str.toLowerCase().includes("uncredited"))
+          )
         );
-        if (!charOptions.length) continue;
-        const character = charOptions[Math.floor(Math.random() * charOptions.length)];
-        usedCharacters.add(character.trim().toLowerCase());
-        chosen.push({ ...m, correctCharacter: character });
+
+        // Remove characters seen in all previous rounds.
+        validChars = validChars.filter(c => 
+          !usedCharacters.includes(c.trim().toLowerCase()) &&
+          !roundCharNames.includes(c.trim().toLowerCase())
+        );
+
+        if (validChars.length === 0) {
+          continue; // try next
+        }
+        // Pick one clue for this movie for this round
+        const character = validChars[Math.floor(Math.random()*validChars.length)];
+        roundCharNames.push(character.trim().toLowerCase());
+        prepared.push({
+          ...m,
+          characterOptions: validChars,
+          correctCharacter: character
+        });
       }
 
-      if (chosen.length < neededMovies) {
-        // If by any chance duplicate character names reduced our count, retry
-        if (isMounted) setTimeout(setupGame, 850);
+      // If for any reason <MOVIES_PER_ROUND movies got enough clues, try refilling from pool
+      if (prepared.length < MOVIES_PER_ROUND) {
+        // Mark as end (shouldn't typically trigger)
+        endOfQuestions.current = true;
+        setGamesCount(round+1);
+        setLoading(false);
         return;
       }
 
-      // Prepare drag clues, shuffle clues
-      const clues = shuffleArray(
-        chosen.map((m) => ({
-          character: m.correctCharacter,
-          movieId: m.id,
-        }))
-      );
+      // Build clues: shuffle clues for drag-arrangement
+      const roundClues = shuffleArray(prepared.map(m => ({
+        character: m.correctCharacter,
+        movieId: m.id
+      })));
 
-      if (isMounted) {
-        setMovies(chosen);
-        setCharacterClues(clues);
+      // If not cancelled, set state
+      if (!didCancel) {
+        setRoundMovies(prepared);
+        setClues(roundClues);
         setAssignments({});
         setLoading(false);
       }
     }
-    setupGame();
-    return () => {
-      isMounted = false;
-    };
+    setupRound();
+    return ()=>{ didCancel = true; }
     // eslint-disable-next-line
-  }, []);
+  }, [round, allAvailableMovies]); // triggers on initial load or round increment
 
   // Drag handlers for clues (top row)
   function onDragStartClue(e, character) {
-    e.dataTransfer.setData("character", character);
+    e.dataTransfer?.setData("character", character);
     setDraggedClue(character);
-    // Custom drag avatar is optional for clarity
   }
-  function onDragEndClue() {
-    setDraggedClue(null);
-  }
+  function onDragEndClue() { setDraggedClue(null); }
 
   // Allow dropping on poster
-  function onDragOverPoster(e) {
-    e.preventDefault();
-  }
+  function onDragOverPoster(e) { e.preventDefault(); }
   function onDropPoster(e, movieId) {
     e.preventDefault();
-    const character = (e.dataTransfer.getData && e.dataTransfer.getData("character")) || draggedClue;
+    const character = (e.dataTransfer?.getData("character")) || draggedClue;
     if (!character) return;
-    // Only allow assigning unused clues
     if (
-      characterClues.some((c) => c.character === character) &&
+      clues.some(c => c.character === character) &&
       !Object.values(assignments).includes(character)
     ) {
-      setAssignments((prev) => ({
+      setAssignments(prev => ({
         ...prev,
-        [movieId]: character,
+        [movieId]: character
       }));
     }
     setDraggedClue(null);
@@ -188,99 +193,140 @@ function CharacterMovieMatch() {
   // For keyboard accessibility (tab+enter to assign)
   function assignClueToPoster(character, movieId) {
     if (
-      characterClues.some((c) => c.character === character) &&
+      clues.some(c => c.character === character) &&
       !Object.values(assignments).includes(character)
     ) {
-      setAssignments((prev) => ({
+      setAssignments(prev => ({
         ...prev,
-        [movieId]: character,
+        [movieId]: character
       }));
     }
   }
 
-  // Unassign a clue from a poster (allow re-match before submit)
   function clearAssignment(movieId) {
-    setAssignments((prev) => {
+    setAssignments(prev => {
       const newAssign = { ...prev };
       delete newAssign[movieId];
       return newAssign;
     });
   }
 
-  function handleReveal() {
-    setReveal(true);
-    setShowClues(true);
-    setTimeout(handleSubmit, 2200);
+  // Evaluate user assignments for round
+  function evaluateAssignments() {
+    return roundMovies.map((m) => ({
+      movieId: m.id,
+      poster: m.poster_path,
+      movie: m.title,
+      chosen: assignments[m.id],
+      correct: m.correctCharacter,
+      correctMatch: !!assignments[m.id] && assignments[m.id] === m.correctCharacter
+    }));
+  }
+
+  // Compute round score
+  function roundScore(resultList) {
+    return resultList.filter(r => r.correctMatch).length;
   }
 
   // PUBLIC_INTERFACE
   function handleSubmit() {
-    // Compute result summary
-    const summary = movies.map((m) => {
-      return {
-        movieId: m.id,
-        poster: m.poster_path,
-        movie: m.title,
-        chosen: assignments[m.id],
-        correct: m.correctCharacter,
-        correctMatch:
-          !!assignments[m.id] && assignments[m.id] === m.correctCharacter,
-      };
+    // 1. Evaluate results for the round
+    const summary = evaluateAssignments();
+    const roundCorrect = roundScore(summary);
+    // 2. Update round-wise results array (append for new round)
+    setRoundResults(prev => {
+      let copy = prev.slice();
+      copy[round] = summary;
+      return copy;
     });
-    setResults(summary);
+    // 3. Mark reveal, feedback, and show answers before proceeding
     setReveal(true);
     setShowClues(true);
+    setFeedback(`Round ${round + 1}: You matched ${roundCorrect} of ${MOVIES_PER_ROUND} correctly!`);
+    // 4. Wait and then progress to next round or summary
+    // Mark movies/characters as used (across all game)
+    setUsedMovieIds(prev => prev.concat(roundMovies.map(m=>m.id)));
+    setUsedCharacters(prev => prev.concat(roundMovies.map(m=>m.correctCharacter.trim().toLowerCase())));
+    // Progression: move to next round or summary screen
     setTimeout(() => {
-      navigate("/summary/character-movie-match", {
-        state: {
-          results: summary.map((item) => ({
-            correct: item.correctMatch,
-            guess: item.chosen,
-            solution: item.correct,
-            poster: item.poster,
-          })),
-        },
-      });
-    }, 2000);
+      if ((round + 1) < gamesCount && !endOfQuestions.current) {
+        setRound(round + 1);
+        // All other state changes handled in useEffect
+      } else {
+        // Build flat results array & go to summary
+        let flatResults = [];
+        let score = 0, total = 0;
+        roundResults.concat([summary]).forEach((lst) => {
+          lst.forEach((item) => {
+            flatResults.push({
+              correct: item.correctMatch,
+              guess: item.chosen,
+              solution: item.correct,
+              poster: item.poster
+            });
+            total++;
+            if (item.correctMatch) score++;
+          });
+        });
+        // Transition to summary
+        navigate("/summary/character-movie-match", {
+          state: { results: flatResults, userScore: score, total: total }
+        });
+      }
+    }, 2100);
   }
 
-  function restartGame() {
-    setMovies([]);
-    setCharacterClues([]);
-    setResults(null);
-    setReveal(false);
-    setShowClues(false);
-    setAssignments({});
-    setTimeout(() => window.location.reload(), 100);
+  function handleReveal() {
+    setReveal(true);
+    setShowClues(true);
+    setFeedback("Revealing answers...");
+    setTimeout(handleSubmit, 2200);
   }
 
+  // Restart (full reload)
+  function restartGame() { window.location.reload(); }
+
+  // Helper for rendering clues
+  function isClueAssigned(clue) {
+    return Object.values(assignments).includes(clue.character);
+  }
+  const allAssigned =
+    Object.keys(assignments).length === MOVIES_PER_ROUND &&
+    Object.values(assignments).every(Boolean) &&
+    !reveal;
+
+  // UI Render
   if (loading)
     return (
       <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
         Loading posters and character clues...
       </div>
     );
-  if (!movies.length || !characterClues.length)
+  if (endOfQuestions.current) {
     return (
       <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
-        Failed to load enough movies/characters. <br />
+        {gamesCount > 1
+          ? "You've answered all non-repeating movie rounds for this session!"
+          : "Failed to load enough data for a round."}
+        <br />
+        <button className="kq-btn outline" onClick={restartGame}>Retry</button>
+      </div>
+    );
+  }
+  if (!roundMovies.length || !clues.length)
+    return (
+      <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
+        Failed to load movies/characters for this round.<br />
         <button className="kq-btn outline" onClick={restartGame}>Retry</button>
       </div>
     );
 
-  const allAssigned =
-    Object.keys(assignments).length === MOVIE_COUNT &&
-    Object.values(assignments).every(Boolean) &&
-    !results;
-
-  // Get available clues (not yet assigned)
-  function isClueAssigned(clue) {
-    return Object.values(assignments).includes(clue.character);
-  }
-
   return (
     <div className="kq-quiz-panel" tabIndex={-1}>
-      <QuizProgressBar step={results ? MOVIE_COUNT : 0} total={MOVIE_COUNT} />
+      <QuizProgressBar step={round} total={gamesCount} />
+      <div style={{ color: "#222", marginBottom: 9, fontWeight: 600, fontSize: "1.16em" }}>
+        Round {round + 1} of {gamesCount}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {/* Top: DRAGGABLE CLUES */}
         <div
@@ -293,26 +339,20 @@ function CharacterMovieMatch() {
             marginBottom: 8,
           }}
         >
-          {characterClues.map((clue, idx) => (
+          {clues.map((clue, idx) => (
             <button
               key={clue.character + idx}
               style={{
                 borderRadius: 7,
-                cursor:
-                  !isClueAssigned(clue) && !reveal && !results
-                    ? "grab"
-                    : "not-allowed",
+                cursor: !isClueAssigned(clue) && !reveal ? "grab" : "not-allowed",
                 padding: "10px 17px",
                 background: "#fff",
                 color: "#f604c2",
                 border: "2px solid #f604c2",
                 fontWeight: "bold",
                 fontSize: "1.08rem",
-                opacity: isClueAssigned(clue) || reveal || results ? 0.36 : 1,
-                pointerEvents:
-                  isClueAssigned(clue) || reveal || results
-                    ? "none"
-                    : "auto",
+                opacity: isClueAssigned(clue) || reveal ? 0.36 : 1,
+                pointerEvents: isClueAssigned(clue) || reveal ? "none" : "auto",
                 userSelect: "none",
                 outline:
                   draggedClue === clue.character && !isClueAssigned(clue)
@@ -321,8 +361,8 @@ function CharacterMovieMatch() {
                 boxShadow: draggedClue === clue.character ? "0 0 4px #b51b3b88" : "",
                 transition: "opacity 0.15s, outline 0.18s, box-shadow 0.13s"
               }}
-              tabIndex={isClueAssigned(clue) || reveal || results ? -1 : 0}
-              draggable={!isClueAssigned(clue) && !reveal && !results}
+              tabIndex={isClueAssigned(clue) || reveal ? -1 : 0}
+              draggable={!isClueAssigned(clue) && !reveal}
               aria-label={`character ${clue.character}`}
               onDragStart={(e) => onDragStartClue(e, clue.character)}
               onDragEnd={onDragEndClue}
@@ -331,7 +371,6 @@ function CharacterMovieMatch() {
                 if (
                   !isClueAssigned(clue) &&
                   !reveal &&
-                  !results &&
                   (e.key === "Enter" || e.key === " ")
                 ) {
                   setDraggedClue(clue.character);
@@ -347,7 +386,7 @@ function CharacterMovieMatch() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${MOVIE_COUNT}, minmax(122px,1fr))`,
+            gridTemplateColumns: `repeat(${MOVIES_PER_ROUND}, minmax(122px,1fr))`,
             gap: "22px",
             justifyItems: "center",
             alignItems: "flex-start",
@@ -355,9 +394,9 @@ function CharacterMovieMatch() {
             marginBottom: "7px",
           }}
         >
-          {movies.map((movie, idx) => {
+          {roundMovies.map((movie, idx) => {
             const assignedCharacter = assignments[movie.id];
-            const isDropTarget = !assignedCharacter && !reveal && !results;
+            const isDropTarget = !assignedCharacter && !reveal;
             return (
               <div
                 key={movie.id}
@@ -399,7 +438,7 @@ function CharacterMovieMatch() {
                       : "2px dashed #f604c2",
                     background: "#ddd",
                     transition: "border 0.18s",
-                    opacity: reveal || results ? 0.84 : 1,
+                    opacity: reveal ? 0.84 : 1,
                   }}
                   draggable={false}
                 />
@@ -418,7 +457,7 @@ function CharacterMovieMatch() {
                   {assignedCharacter && (
                     <span>
                       🏷️ <b>{assignedCharacter}</b>
-                      {!reveal && !results && (
+                      {!reveal && (
                         <span
                           title="Unassign"
                           style={{
@@ -427,9 +466,7 @@ function CharacterMovieMatch() {
                             opacity: 0.55,
                             cursor: "pointer",
                           }}
-                          onClick={() =>
-                            !reveal && !results && clearAssignment(movie.id)
-                          }
+                          onClick={() => !reveal && clearAssignment(movie.id)}
                           tabIndex={0}
                           onKeyUp={(e) =>
                             (e.key === "Delete" || e.key === "Backspace") &&
@@ -497,21 +534,21 @@ function CharacterMovieMatch() {
           <button
             className="kq-quiz-answer-btn"
             onClick={() => setShowClues((v) => !v)}
-            disabled={showClues || !!results}
+            disabled={showClues || reveal}
           >
             {showClues ? "Clue shown" : "Show Clue"}
           </button>
           <button
             className="kq-quiz-answer-btn reveal"
             onClick={handleReveal}
-            disabled={reveal || !!results}
+            disabled={reveal}
           >
             Reveal
           </button>
           <button
             className="kq-quiz-answer-btn"
             onClick={handleSubmit}
-            disabled={!allAssigned || reveal || !!results}
+            disabled={!allAssigned || reveal}
           >
             Submit
           </button>
@@ -523,16 +560,16 @@ function CharacterMovieMatch() {
             </span>
           </div>
         )}
-        {results && (
+        {(reveal || feedback) && (
           <div
             style={{
-              color: "#1b9e38",
+              color: reveal ? "#b51b3b" : "#222",
               marginTop: 14,
               textAlign: "center",
               fontWeight: 600,
             }}
           >
-            Results submitted! Redirecting...
+            {feedback}
           </div>
         )}
       </div>
