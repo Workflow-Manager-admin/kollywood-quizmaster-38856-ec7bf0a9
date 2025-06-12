@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { discoverTamilMovies, getMovieCast } from "../tmdb";
+import { discoverTamilMovies, getMovieCast, searchMovies } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
 
 /**
  * Game: Cast Combo - guess movie for given combo of actors; reverse: who doesn't fit in given movie.
+ * 
+ * Extension: if a specific negative cast trivia for 'O Kadhal Kanmani' is needed,
+ * override the first question to be a multiple-choice "Pick the actor NOT present in: O Kadhal Kanmani".
+ * Fetch real cast, and inject a plausible Kollywood actor as distractor.
  */
 // PUBLIC_INTERFACE
 function CastCombo() {
@@ -16,22 +20,11 @@ function CastCombo() {
   const [showClues, setShowClues] = useState(false);
   const [reveal, setReveal] = useState(false);
   const [results, setResults] = useState([]);
+  const [okkLoaded, setOkkLoaded] = useState(false);
+  const [okkCombo, setOkkCombo] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    discoverTamilMovies({ page: 7 }).then((movies) => {
-      setQuestions(movies.slice(0, TOTAL));
-    });
-  }, []);
-
-  useEffect(() => {
-    generateCombo();
-    setReveal(false);
-    setShowClues(false);
-    setUserAnswer("");
-  // eslint-disable-next-line
-  }, [step, questions]);
-
+  // Helper: shuffle array
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -40,36 +33,166 @@ function CastCombo() {
     }
     return a;
   }
-  function generateCombo() {
-    const q = questions[step];
-    if (!q) return;
-    // Give: 3 actors from movie, 1 not-in-movie (reverse sometimes)
-    getMovieCast(q.id).then((cast) => {
-      const names = cast
-        .filter((c) => c.name)
-        .slice(0, 9)
-        .map((c) => c.name);
-      if (Math.random() < 0.5) {
-        // Normal: show actors, user guesses the movie
-        setCombo({ actors: names.slice(0, 3), movie: q.title, notIn: "" });
-      } else {
-        // Reverse: show 3 actors from movie + fake, user picks which actor is NOT in movie
-        discoverTamilMovies({ page: 10 }).then((mv2) => {
-          const restNames = mv2
-            .flatMap((m) => m.title && m.id !== q.id ? [m.title] : [])
-            .concat(names);
-          const notIn = shuffle(restNames).find(
-            (nm) => !names.includes(nm) && typeof nm === "string"
-          );
+
+  // Generate OK Kanmani special question
+  useEffect(() => {
+    async function setupOkkQn() {
+      // 1. Find TMDb id for O Kadhal Kanmani
+      let movieId = null;
+      // Try up to a few variants to avoid mismatch
+      const variants = [
+        "O Kadhal Kanmani",
+        "OK Kanmani",
+        "O Kadhal Kanmani (2015)"
+      ];
+      let movieData = null;
+      for (let title of variants) {
+        const found = await searchMovies(title, { language: "ta-IN", region: "IN" });
+        movieData = (found || []).find(m =>
+          m.title &&
+          (
+            m.title.toLowerCase() === "o kadhal kanmani" ||
+            m.title.toLowerCase() === "ok kanmani"
+          )
+        );
+        if (movieData && movieData.id) {
+          movieId = movieData.id;
+          break;
+        }
+      }
+      // Fallback: search for English title "O Kadhal Kanmani"
+      if (!movieId && (!movieData || !movieData.id)) {
+        const found = await searchMovies("O Kadhal Kanmani");
+        movieData = (found || []).find(m =>
+          m.title &&
+          (
+            m.title.toLowerCase() === "o kadhal kanmani" ||
+            m.title.toLowerCase() === "ok kanmani"
+          )
+        );
+        if (movieData && movieData.id) {
+          movieId = movieData.id;
+        }
+      }
+
+      // 2. Get cast
+      let cast = [];
+      if (movieId) {
+        cast = await getMovieCast(movieId).catch(() => []);
+      }
+
+      // 3. Pick 3 main actors
+      const actorNames = (cast || [])
+        .filter(c => c.name)
+        .slice(0, 6) // broaden in case top billed not desired
+        .map(c => c.name);
+
+      // Known main actors for context:
+      // Dulquer Salmaan, Nithya Menen, Prakash Raj
+      let mainCast = [];
+      // Ensure Dulquer Salmaan & Nithya Menen included
+      ["Dulquer Salmaan", "Nithya Menen", "Prakash Raj", "Ramya Subramanian", "Leela Samson"].forEach(n => {
+        if (actorNames.includes(n) && !mainCast.includes(n)) {
+          mainCast.push(n);
+        }
+      });
+      // If not enough, fill from fetched
+      for (let n of actorNames) {
+        if (mainCast.length >= 3) break;
+        if (!mainCast.includes(n)) mainCast.push(n);
+      }
+      mainCast = mainCast.slice(0, 3);
+
+      // 4. Plausible but absent Kollywood actor as distractor (not in mainCast or actorNames)
+      // Use a small pool of famous Kollywood actors or search from other TMDb Tamil movies
+      const plausibleDistractors = [
+        "Sivakarthikeyan",
+        "Vijay",
+        "Vikram",
+        "Karthi",
+        "Suriya",
+        "Arya",
+        "Samantha Ruth Prabhu"
+      ];
+      // Remove any who are (somehow) in main cast
+      const distractor =
+        plausibleDistractors.find(n => !actorNames.includes(n) && !mainCast.includes(n))
+        || "Sivakarthikeyan"; // fallback
+
+      // Build shuffled options and mark answer
+      const allOptions = shuffle([...mainCast, distractor]);
+      const okkQnCombo = {
+        actors: allOptions,
+        movie: "O Kadhal Kanmani",
+        notIn: distractor
+      };
+      setOkkCombo(okkQnCombo);
+      setOkkLoaded(true);
+    }
+    // Only setup for step 0
+    if (step === 0) {
+      setupOkkQn();
+    } else {
+      setOkkLoaded(false);
+    }
+    // eslint-disable-next-line
+  }, [step]);
+
+  // Load other game questions (for other steps)
+  useEffect(() => {
+    // Just fetch general Tamil movies for other quiz rounds as before
+    discoverTamilMovies({ page: 7 }).then((movies) => {
+      setQuestions(movies.slice(0, TOTAL));
+    });
+  }, []);
+
+  // For all non-step 0 OR if okkLoaded is false, generate normal question
+  useEffect(() => {
+    async function generateCombo() {
+      if (step === 0 && okkLoaded && okkCombo) {
+        setCombo(okkCombo);
+        setReveal(false);
+        setShowClues(false);
+        setUserAnswer("");
+        return;
+      }
+      // Otherwise: normal combo question (randomly negative or not, original logic)
+      const q = questions[step];
+      if (!q) return;
+      await getMovieCast(q.id).then((cast) => {
+        const names = cast
+          .filter((c) => c.name)
+          .slice(0, 9)
+          .map((c) => c.name);
+        if (Math.random() < 0.5) {
+          // Standard: show actors, guess movie
+          setCombo({ actors: names.slice(0, 3), movie: q.title, notIn: "" });
+        } else {
+          // Reverse: show 3 actors from movie + fake distractor not in movie
+          // Find plausible distractors
+          const plausibleDistractors = [
+            "Sivakarthikeyan", "Vijay", "Vikram", "Karthi", "Suriya",
+            "Arya", "Samantha Ruth Prabhu", "Anirudh Ravichander", "Jyotika"
+          ];
+          const notIn =
+            shuffle(plausibleDistractors)
+              .find(nm => !names.includes(nm) && typeof nm === "string")
+            || "Sivakarthikeyan";
           setCombo({
             actors: shuffle([...names.slice(0, 3), notIn]).slice(0, 4),
             movie: q.title,
             notIn,
           });
-        });
-      }
-    });
-  }
+        }
+        setReveal(false);
+        setShowClues(false);
+        setUserAnswer("");
+      });
+    }
+    // Always trigger on step/okkLoaded/question load
+    generateCombo();
+    // eslint-disable-next-line
+  }, [step, questions, okkLoaded]);
 
   function checkAnswer() {
     let ok;
@@ -97,7 +220,7 @@ function CastCombo() {
     setTimeout(checkAnswer, 1400);
   }
 
-  if (!questions.length || !combo.actors.length)
+  if ((step === 0 && !okkLoaded) || !combo.actors.length)
     return (
       <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
         Loading...
