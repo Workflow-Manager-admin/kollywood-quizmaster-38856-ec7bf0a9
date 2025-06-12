@@ -277,64 +277,101 @@ function SpinTheWheel() {
             </div>
           </div>
         ) : selectedSegment != null ? (
-          <div style={{ marginTop: 30, minHeight: 160, display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ fontSize: 22, color: "#f604c2", fontWeight: "bold", marginBottom: 6 }}>
-              {`Q${selectedSegment + 1}`}
-            </div>
-            <div className="kq-quiz-clues">
-              <ul style={{ color: "#0b0a0a", fontSize: "1.12em", margin: 0, listStyle: "disc inside", paddingLeft: 8 }}>
-                <li>
-                  <b>Actor:</b>{" "}
-                  <span style={{ color: "#b51b3b" }}>
-                    {questions[selectedSegment]?.clueActor}
-                  </span>
-                </li>
-                <li>
-                  <b>Actress:</b>{" "}
-                  <span style={{ color: "#b51b3b" }}>
-                    {questions[selectedSegment]?.clueActress}
-                  </span>
-                </li>
-                <li>
-                  <b>Year:</b>{" "}
-                  <span style={{ color: "#f604c2" }}>
-                    {questions[selectedSegment]?.clueYear}
-                  </span>
-                </li>
-              </ul>
-              <div
-                style={{
-                  marginTop: 11,
-                  color: "#0b0a0a",
-                  opacity: 0.75,
-                  fontSize: 14.5,
-                  marginBottom: 5,
-                  textAlign: "center",
-                }}
-              >
-                Guess the movie for these clues:<br />
-                <b style={{ color: "#222" }}>
-                  ({questions[selectedSegment]?.title || ""})
-                </b>
-              </div>
-            </div>
-            <div style={{ marginTop: 19, marginBottom: 6 }}>
-              <button
-                className="kq-btn"
-                onClick={handleNext}
-                style={{
-                  padding: "10px 26px",
-                  fontWeight: 700,
-                  fontSize: 18,
-                  borderRadius: 7,
-                }}
-              >
-                {results.length + 1 >= TOTAL ? "View Results" : "Next Spin"}
-              </button>
-            </div>
-          </div>
+          // --- Begin new answer/reveal input UI for SpinTheWheel ---
+          <SpinWheelAnswerArea
+            question={questions[selectedSegment]}
+            qIdx={selectedSegment}
+            onContinue={handleNext}
+            showContinueBtn={true}
+            isLast={results.length + 1 >= TOTAL}
+          />
         ) : null}
       </div>
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function SpinWheelAnswerArea({ question, qIdx, onContinue, showContinueBtn, isLast }) {
+  // Local state for answer and reveal
+  const [answer, setAnswer] = React.useState("");
+  const [reveal, setReveal] = React.useState(false);
+  // Controls: answer input, Reveal, then Next
+  return (
+    <div style={{ marginTop: 30, minHeight: 195, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ fontSize: 22, color: "#f604c2", fontWeight: "bold", marginBottom: 6 }}>
+        Q{qIdx + 1}
+      </div>
+      <div className="kq-quiz-clues">
+        <ul style={{ color: "#0b0a0a", fontSize: "1.12em", margin: 0, listStyle: "disc inside", paddingLeft: 8 }}>
+          <li>
+            <b>Actor:</b>{" "}
+            <span style={{ color: "#b51b3b" }}>
+              {question?.clueActor}
+            </span>
+          </li>
+          <li>
+            <b>Actress:</b>{" "}
+            <span style={{ color: "#b51b3b" }}>
+              {question?.clueActress}
+            </span>
+          </li>
+          <li>
+            <b>Year:</b>{" "}
+            <span style={{ color: "#f604c2" }}>
+              {question?.clueYear}
+            </span>
+          </li>
+        </ul>
+      </div>
+      <div className="kq-quiz-answer-row" style={{ maxWidth: 320, width: "100%", margin: "18px 0 0 0" }}>
+        <input
+          type="text"
+          className="kq-input"
+          placeholder="Type your movie title guess"
+          style={{ flex: 1, fontSize: "1.09em" }}
+          value={answer}
+          onChange={e => setAnswer(e.target.value)}
+          disabled={reveal}
+          autoFocus
+        />
+      </div>
+      <div className="kq-quiz-action-bar" style={{ marginTop: 12 }}>
+        <button
+          className="kq-quiz-answer-btn reveal"
+          onClick={() => setReveal(true)}
+          disabled={reveal}
+          style={{ padding: "10px 21px" }}
+        >
+          Reveal
+        </button>
+        {showContinueBtn && (
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={onContinue}
+            style={{ padding: "10px 24px" }}
+            disabled={!reveal}
+          >
+            {isLast ? "View Results" : "Next Spin"}
+          </button>
+        )}
+      </div>
+      {reveal && (
+        <div
+          style={{
+            background: "#f8e7f4",
+            marginTop: 14,
+            borderRadius: 7,
+            padding: 10,
+            textAlign: "center",
+            color: "#b51b3b",
+            fontWeight: 600,
+            fontSize: "1.17em"
+          }}
+        >
+          The answer is: {question?.title}
+        </div>
+      )}
     </div>
   );
 }
