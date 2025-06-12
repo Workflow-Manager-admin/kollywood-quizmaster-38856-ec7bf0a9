@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
 import BackButton from "./BackButton";
+import { useNavigate } from "react-router-dom";
 
 /**
  * MovieBingo main component.
@@ -13,7 +14,6 @@ import BackButton from "./BackButton";
  * Deepest clues use: getMovieCast (for actor/role questions), getMovieDetails (for tagline/award/genre info),
  * and movie properties (release year, genre). Grid always contains 9 (3x3) distinct trivia types if possible.
  */
-import BackButton from "./BackButton";
 
 // PUBLIC_INTERFACE
 function MovieBingo() {
