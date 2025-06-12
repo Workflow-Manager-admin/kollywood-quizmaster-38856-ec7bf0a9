@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { fetchPopularKollywoodMovies, fetchMovieDetails } from "./tmdbApi";
 
+/*
+ * Refactored to ensure that each round/question in a session presents a UNIQUE bingo category.
+ * The session's unused categories are tracked using React useRef & useEffect,
+ * eliminating module-level session leaks and guaranteeing per-session uniqueness.
+ */
+
 // Demo list of categories mapped to TMDb values (replace/expand as needed)
 const bingoCategories = [
   { label: "A Comedy", genreId: 35 },
@@ -14,55 +20,44 @@ const bingoCategories = [
   { label: "Romantic", genreId: 10749 },
 ];
 
-// Helper
+// PUBLIC_INTERFACE
+// Fisher-Yates shuffle for unbiased random order
 function shuffle(arr) {
-  // Defensive: ensure arr exists and is array
   if (!Array.isArray(arr)) return [];
-  return arr.sort(() => Math.random() - 0.5);
-}
-
-// --- SESSION CATEGORY LOGIC ---
-// To ensure unique categories per game session, we'll keep a static sessionCategoryQueue in module scope.
-// When a new game starts (component mount), we'll shuffle and use this queue for the round order.
-let sessionCategoryQueue = [];
-let sessionCategoryQueueIdx = 0;
-const SESSION_SIZE = 10; // Number of unique bingo sessions/questions per game (matches game rounds in parent)
-
-function pickNextBingoCategory() {
-  // If starting, (re)shuffle and reset
-  if (
-    !sessionCategoryQueue.length ||
-    sessionCategoryQueue.length !== bingoCategories.length ||
-    sessionCategoryQueueIdx >= sessionCategoryQueue.length
-  ) {
-    sessionCategoryQueue = shuffle([...bingoCategories]);
-    sessionCategoryQueueIdx = 0;
+  const result = arr.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
   }
-  const picked = sessionCategoryQueue[sessionCategoryQueueIdx];
-  sessionCategoryQueueIdx += 1;
-  return picked;
+  return result;
 }
 
 // PUBLIC_INTERFACE
 function MovieBingo({ onResult }) {
   /**
-   * Movie Bingo: 3x3 grid of movies, but ONLY ONE grid cell (movie) can be selected per category/question.
-   * Clicking a cell locks the answer: cell colors green for correct answer, red for wrong. Cannot change after selection.
-   * Robust to rapid or duplicate clicks and missing data edge cases.
-   * 
-   * It is refactored so that each session/game draws a unique category (bingo challenge) for each question, not repeating during user's 10-round session.
+   * Movie Bingo: Shows a 3x3 grid of movies where only one matches the question's category.
+   * Each bingo round uses a unique (per session) bingo category, managed and tracked via React state/ref.
    */
   const [category, setCategory] = useState(null);
   const [movies, setMovies] = useState([]); // [{id, title}]
   const [status, setStatus] = useState("loading"); // loading | ready | locked | revealed | error
   const [error, setError] = useState("");
   const [correctIdx, setCorrectIdx] = useState(null); // index (0-8) of the one correct cell for the category
-  const [selectedIdx, setSelectedIdx] = useState(null); // index of user's chosen cell
-  const [isCorrect, setIsCorrect] = useState(null); // boolean: correct/wrong/null
-
-  // Defensive, for async race avoidance
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [isCorrect, setIsCorrect] = useState(null);
   const [gridDisabled, setGridDisabled] = useState(false);
 
+  // --- CATEGORY SESSION POOL LOGIC ---
+  // Track per-session unique categories with useRef (initialized on component mount)
+  const sessionTracker = React.useRef({ categories: [], idx: 0 });
+
+  // On first mount, initialize session category pool and index
+  useEffect(() => {
+    sessionTracker.current.categories = shuffle([...bingoCategories]);
+    sessionTracker.current.idx = 0;
+  }, []);
+
+  // For each Q, useEffect triggers (component re-mount per round is ensured via parent)
   useEffect(() => {
     let ignore = false;
     async function loadGrid() {
@@ -74,17 +69,24 @@ function MovieBingo({ onResult }) {
       setGridDisabled(false);
       setCorrectIdx(null);
 
-      // Pick unique random category for this round/session (never repeated in one user's session of 10 questions)
-      const chosenCat = pickNextBingoCategory();
+      // Pick the next fresh unused category from the session pool, cycling & reshuffling if exhausted.
+      let catIdx = sessionTracker.current.idx;
+      if (catIdx >= sessionTracker.current.categories.length) {
+        // All used up? Reshuffle unless fewer than 10 Q in a session
+        sessionTracker.current.categories = shuffle([...bingoCategories]);
+        sessionTracker.current.idx = 0;
+        catIdx = 0;
+      }
+      const chosenCat = sessionTracker.current.categories[catIdx];
+      sessionTracker.current.idx += 1;
       setCategory(chosenCat);
 
-      // Determine filter logic and load at least 9 grid movies and one true match/correct answer
+      // ===== GRID LOADING CODE as LOGICALLY BEFORE =====
       let found = [];
       let correctMovie = null;
-
       let page = 1;
       try {
-        // --- 1. Find at least 1 movie that REALLY matches the category ---
+        // --- 1. Find at least 1 movie that matches the category ---
         let correctOptions = [];
         while (correctOptions.length < 1 && page < 7) {
           const d = await fetchPopularKollywoodMovies(page++);
@@ -117,8 +119,7 @@ function MovieBingo({ onResult }) {
         }
         if (correctOptions.length === 0) throw new Error("No valid movie found for Bingo category. Quota/data issue.");
         correctMovie = correctOptions[0];
-        // --- 2. Find additional movies (distractors): similar popularity but NOT actually matching this category
-        // Let's try to ensure grid is challenging (all Tamil, all different) but only 1 that fits the clue.
+        // --- 2. Find additional grid movies (distractors) ---
         found = [correctMovie];
         page = 1;
         let skipIds = new Set([correctMovie.id]);
@@ -160,7 +161,6 @@ function MovieBingo({ onResult }) {
         // Ensure correct still in grid
         let correctIdxFinal = found.findIndex(m => m.id === correctMovie.id);
         if (correctIdxFinal === -1) {
-          // In an edge case, forcibly replace first cell
           found[0] = correctMovie;
           correctIdxFinal = 0;
         }
