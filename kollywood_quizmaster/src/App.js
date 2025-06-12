@@ -16,6 +16,10 @@ import GameSummary from "./components/GameSummary";
 // -- App-wide user context. --
 export const UserContext = createContext(null);
 
+/*
+ * No direct usage of PUBLIC_URL here (must use process.env.PUBLIC_URL for React scripts).
+ * If you see any usage of PUBLIC_URL, replace with process.env.PUBLIC_URL.
+ */
 // No PUBLIC_URL usage here; kept as-is
 
 function Navbar({ user, onLogout }) {

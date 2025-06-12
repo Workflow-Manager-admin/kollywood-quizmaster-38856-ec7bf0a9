@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
  * PUBLIC_INTERFACE
  * Note: Always use process.env.PUBLIC_URL if you need the public URL prefix in React.
  */
+// Ensure PUBLIC_URL usage is correct everywhere
 function MovieBingo() {
   // Set grid size: 3x3 grid with 9 questions (can change to 4x4 for 16)
   const GRID_SIZE = 3; // 3x3 grid
