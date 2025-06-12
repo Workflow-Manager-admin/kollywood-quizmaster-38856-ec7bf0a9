@@ -241,25 +241,76 @@ function CastCombo() {
         </div>
       )}
       {combo.notIn ? (
-        <div className="kq-quiz-action-bar">
-          {combo.actors.map((n, idx) => (
-            <button
-              className="kq-btn outline"
-              key={n + idx}
-              style={{
+        <div>
+          <div className="kq-quiz-action-bar" style={{ flexWrap: "wrap", marginBottom: 8 }}>
+            {combo.actors.map((n, idx) => {
+              // Feedback coloring
+              let btnStyle = {
                 color: userAnswer === n ? "#fff" : "#f604c2",
                 background: userAnswer === n ? "#f604c2" : "#fff",
-                fontWeight: "700",
+                fontWeight: 700,
                 border: "2px solid #f604c2",
                 minWidth: 110,
                 marginBottom: 4,
-              }}
-              onClick={() => setUserAnswer(n)}
+                pointerEvents: reveal ? "none" : "auto",
+                opacity: reveal && userAnswer !== n ? 0.65 : 1,
+                transition: "background 0.17s, color 0.16s",
+              };
+              // If locking after submit, use feedback color
+              if (reveal && userAnswer) {
+                if (n === userAnswer) {
+                  if (userAnswer === combo.notIn) {
+                    btnStyle.background = "#1b9e38";
+                    btnStyle.color = "#fff";
+                    btnStyle.border = "2.5px solid #137b2c";
+                    btnStyle.boxShadow = "0 0 7px #34c85a88";
+                  } else {
+                    btnStyle.background = "#b51b3b";
+                    btnStyle.color = "#fff";
+                    btnStyle.border = "2.5px solid #7c1e2f";
+                    btnStyle.boxShadow = "0 0 7px #f3123888";
+                  }
+                }
+              }
+              return (
+                <button
+                  className="kq-btn outline"
+                  key={n + idx}
+                  style={btnStyle}
+                  onClick={() => !reveal && setUserAnswer(n)}
+                  disabled={reveal}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          <div className="kq-quiz-action-bar">
+            <button
+              className="kq-quiz-answer-btn"
+              onClick={() => setShowClues(true)}
+              disabled={showClues}
+            >
+              Clue
+            </button>
+            <button
+              className="kq-quiz-answer-btn reveal"
+              onClick={handleReveal}
               disabled={reveal}
             >
-              {n}
+              Reveal
             </button>
-          ))}
+            {/* Add Submit for NOT-in questions */}
+            <button
+              className="kq-quiz-answer-btn"
+              onClick={() => {
+                if (userAnswer && !reveal) setReveal(true);
+              }}
+              disabled={!userAnswer || reveal}
+            >
+              Submit
+            </button>
+          </div>
         </div>
       ) : (
         <div className="kq-quiz-answer-row">
@@ -273,18 +324,18 @@ function CastCombo() {
           />
         </div>
       )}
-      <div className="kq-quiz-action-bar">
-        <button
-          className="kq-quiz-answer-btn"
-          onClick={() => setShowClues(true)}
-          disabled={showClues}
-        >
-          Clue
-        </button>
-        <button className="kq-quiz-answer-btn reveal" onClick={handleReveal} disabled={reveal}>
-          Reveal
-        </button>
-        {!combo.notIn && (
+      {!combo.notIn && (
+        <div className="kq-quiz-action-bar">
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={() => setShowClues(true)}
+            disabled={showClues}
+          >
+            Clue
+          </button>
+          <button className="kq-quiz-answer-btn reveal" onClick={handleReveal} disabled={reveal}>
+            Reveal
+          </button>
           <button
             className="kq-quiz-answer-btn"
             onClick={checkAnswer}
@@ -292,13 +343,27 @@ function CastCombo() {
           >
             Submit
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {showClues && (
         <div className="kq-quiz-clues">
           {combo.notIn
             ? "Hint: One name above is not in the main cast!"
             : "All actors listed are starring in the same movie."}
+        </div>
+      )}
+      {/* Feedback message for NOT-in questions after Submit */}
+      {combo.notIn && reveal && userAnswer && (
+        <div
+          style={{
+            marginTop: 9,
+            color: userAnswer === combo.notIn ? "#1b9e38" : "#b51b3b",
+            fontWeight: 700,
+            fontSize: "1.13em",
+            textAlign: "center"
+          }}
+        >
+          {userAnswer === combo.notIn ? "Correct! 🎉" : "Incorrect."}
         </div>
       )}
       {reveal && (
