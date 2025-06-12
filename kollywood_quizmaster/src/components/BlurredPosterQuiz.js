@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getPosterUrl, discoverTamilMovies, getMovieDetails } from "../tmdb";
+import { getPosterUrl, discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
 import QuizProgressBar from "./QuizProgressBar";
 import { useNavigate } from "react-router-dom";
 
@@ -37,15 +37,27 @@ function BlurredPosterQuiz() {
         return filtered.slice(0, TOTAL);
       })
       .then(async (list) => {
-        // Enrich with clues (overview and release date)
+        // Enrich with clues: get main actors (cast) and release year
         const detailsList = await Promise.all(
-          list.map((m) =>
-            getMovieDetails(m.id).then((d) => ({
+          list.map(async (m) => {
+            // Get details for year, and main cast for clue 1
+            const [details, cast] = await Promise.all([
+              getMovieDetails(m.id),
+              getMovieCast(m.id)
+            ]);
+            const mainActors = Array.isArray(cast)
+              ? cast
+                  .filter((c) => c && c.name)
+                  .slice(0, 3)
+                  .map((c) => c.name)
+              : [];
+            return {
               ...m,
-              overview: d.overview || "",
-              release_date: d.release_date || "",
-            }))
-          )
+              // main clue fields
+              mainActors,
+              release_date: details.release_date || "",
+            };
+          })
         );
         setQuestions(detailsList);
         setLoading(false);
@@ -148,7 +160,10 @@ function BlurredPosterQuiz() {
           <div className="kq-quiz-clues">
             <ul>
               <li>
-                <b>Clue 1:</b> {q.overview ? q.overview.slice(0, 80) + "..." : "No overview"}
+                <b>Clue 1:</b>{" "}
+                {q.mainActors && q.mainActors.length
+                  ? q.mainActors.join(", ")
+                  : "Main actors unavailable"}
               </li>
               <li>
                 <b>Clue 2:</b> Year: {q.release_date ? q.release_date.slice(0, 4) : "?"}
