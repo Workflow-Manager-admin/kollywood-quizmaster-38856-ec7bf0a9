@@ -11,7 +11,7 @@ asset bundle.js 1.95 MiB [emitted] (name: main)
 asset index.html 1.92 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 orphan modules 12.8 KiB [orphan] 3 modules
-cacheable modules 1.75 MiB
+cacheable modules 1.76 MiB
   modules by path ./node_modules/ 1.61 MiB 34 modules
   modules by path ./src/ 134 KiB
     modules by path ./src/components/*.js 111 KiB 10 modules
@@ -21,14 +21,14 @@ cacheable modules 1.75 MiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1948 ms
+webpack 5.99.9 compiled successfully in 2081 ms
 assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.97 MiB
+assets by path *.js 1.98 MiB
   asset bundle.js 1.95 MiB [emitted] (name: main)
-  asset main.08424b5fdf03ae73a2cc.hot-update.js 24.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.08424b5fdf03ae73a2cc.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.97 MiB = bundle.js 1.95 MiB main.08424b5fdf03ae73a2cc.hot-update.js 24.2 KiB
+  asset main.425a1702c6f85a788daf.hot-update.js 26.4 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.425a1702c6f85a788daf.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.98 MiB = bundle.js 1.95 MiB main.425a1702c6f85a788daf.hot-update.js 26.4 KiB
 cached modules 1.75 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
-./src/components/SpinTheWheel.js 18.4 KiB [built] [code generated]
+./src/components/SpinTheWheel.js 20.4 KiB [built] [code generated]
 webpack 5.99.9 compiled successfully in 233 ms

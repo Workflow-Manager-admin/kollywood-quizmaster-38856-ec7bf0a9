@@ -291,12 +291,43 @@ function SpinTheWheel() {
   );
 }
 
+/**
+ * Extended Game: SpinWheelAnswerArea
+ * Adds: Submit button, answer validation, feedback on correctness, disables input after submit, Reveal persistence
+ */
 // PUBLIC_INTERFACE
 function SpinWheelAnswerArea({ question, qIdx, onContinue, showContinueBtn, isLast }) {
   // Local state for answer and reveal
   const [answer, setAnswer] = React.useState("");
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  const [isCorrect, setIsCorrect] = React.useState(null); // true/false/null
   const [reveal, setReveal] = React.useState(false);
-  // Controls: answer input, Reveal, then Next
+
+  // Helper: validate ignoring case/whitespace
+  function normalize(str) {
+    return (str || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+  function handleSubmit() {
+    const correct = normalize(answer) === normalize(question?.title);
+    setIsCorrect(correct);
+    setHasSubmitted(true);
+  }
+  // Once submitted, input is locked. User can always click Reveal to see answer.
+  // Add visual feedback: green border for correct, red for incorrect, and feedback message.
+
+  let inputBorder, feedbackMsg, feedbackColor;
+  if (hasSubmitted) {
+    if (isCorrect) {
+      inputBorder = "2.5px solid #1b9e38";
+      feedbackMsg = "Correct! 🎉";
+      feedbackColor = "#1b9e38";
+    } else {
+      inputBorder = "2.5px solid #b51b3b";
+      feedbackMsg = "Incorrect.";
+      feedbackColor = "#b51b3b";
+    }
+  }
+
   return (
     <div style={{ marginTop: 30, minHeight: 195, display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ fontSize: 22, color: "#f604c2", fontWeight: "bold", marginBottom: 6 }}>
@@ -329,14 +360,51 @@ function SpinWheelAnswerArea({ question, qIdx, onContinue, showContinueBtn, isLa
           type="text"
           className="kq-input"
           placeholder="Type your movie title guess"
-          style={{ flex: 1, fontSize: "1.09em" }}
+          style={{
+            flex: 1,
+            fontSize: "1.09em",
+            border: hasSubmitted ? inputBorder : undefined,
+            transition: "border 0.17s"
+          }}
           value={answer}
           onChange={e => setAnswer(e.target.value)}
-          disabled={reveal}
+          disabled={hasSubmitted || reveal}
           autoFocus
         />
+        {/* Submit button for answer */}
+        <button
+          className="kq-quiz-answer-btn"
+          style={{
+            marginLeft: 9,
+            background: "#f604c2",
+            color: "#fff",
+            fontWeight: 600,
+            padding: "10px 20px",
+            borderRadius: 6,
+            opacity: hasSubmitted ? 0.5 : 1,
+            transition: "opacity 0.13s"
+          }}
+          onClick={handleSubmit}
+          disabled={!answer || hasSubmitted || reveal}
+        >
+          Submit
+        </button>
       </div>
+      {/* Feedback on answer correctness */}
+      {hasSubmitted && (
+        <div
+          style={{
+            marginTop: 8,
+            fontWeight: 600,
+            fontSize: "1.13em",
+            color: feedbackColor
+          }}
+        >
+          {feedbackMsg}
+        </div>
+      )}
       <div className="kq-quiz-action-bar" style={{ marginTop: 12 }}>
+        {/* User can still reveal after submitting */}
         <button
           className="kq-quiz-answer-btn reveal"
           onClick={() => setReveal(true)}
@@ -350,7 +418,7 @@ function SpinWheelAnswerArea({ question, qIdx, onContinue, showContinueBtn, isLa
             className="kq-quiz-answer-btn"
             onClick={onContinue}
             style={{ padding: "10px 24px" }}
-            disabled={!reveal}
+            disabled={!hasSubmitted && !reveal}
           >
             {isLast ? "View Results" : "Next Spin"}
           </button>
