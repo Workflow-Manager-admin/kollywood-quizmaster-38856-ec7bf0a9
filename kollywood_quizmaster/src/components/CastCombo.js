@@ -405,6 +405,7 @@ function CastCombo() {
           />
         </div>
       )}
+      {/* Only show main action bar if not a NOT-in combo */}
       {!combo.notIn && (
         <div className="kq-quiz-action-bar">
           <button
