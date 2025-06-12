@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { discoverTamilMovies, getMovieCast, searchMovies } from "../tmdb";
 import { useNavigate } from "react-router-dom";
 import QuizProgressBar from "./QuizProgressBar";
+import BackButton from "./BackButton";
 
 /**
  * Game: Cast Combo - guess movie for given combo of actors; reverse: who doesn't fit in given movie.
@@ -462,6 +463,7 @@ function CastCombo() {
         </div>
       )}
     </div>
+  </div>
   );
 }
 
