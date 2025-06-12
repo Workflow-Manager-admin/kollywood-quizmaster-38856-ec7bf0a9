@@ -8,7 +8,10 @@ import { useNavigate } from "react-router-dom";
  * Each cell: user selects ONE answer (multiple choice), locks after selection. Correct: green, Incorrect: red.
  * Questions sourced via TMDb for accuracy.
  */
-// PUBLIC_INTERFACE
+/*
+ * PUBLIC_INTERFACE
+ * Note: Always use process.env.PUBLIC_URL if you need the public URL prefix in React.
+ */
 function MovieBingo() {
   // Set grid size: 3x3 grid with 9 questions (can change to 4x4 for 16)
   const GRID_SIZE = 3; // 3x3 grid

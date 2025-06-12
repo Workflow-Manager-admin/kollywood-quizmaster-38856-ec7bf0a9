@@ -13,32 +13,22 @@ runtime modules 27.5 KiB 14 modules
 orphan modules 12.8 KiB [orphan] 3 modules
 cacheable modules 1.73 MiB
   modules by path ./node_modules/ 1.61 MiB 34 modules
-  modules by path ./src/ 107 KiB
-    modules by path ./src/components/*.js 85.5 KiB 10 modules
+  modules by path ./src/ 110 KiB
+    modules by path ./src/components/*.js 88.1 KiB 10 modules
     modules by path ./src/*.css 10.6 KiB 4 modules
     modules by path ./src/*.js 11.2 KiB 3 modules
   modules by path ./.ve/ 15.1 KiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1898 ms
+webpack 5.99.9 compiled successfully in 1884 ms
 assets by status 1.92 KiB [cached] 1 asset
 assets by path *.js 1.95 MiB
   asset bundle.js 1.92 MiB [emitted] (name: main)
-  asset main.4f4b44293e6e44733ba2.hot-update.js 30.3 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.4f4b44293e6e44733ba2.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.95 MiB = bundle.js 1.92 MiB main.4f4b44293e6e44733ba2.hot-update.js 30.3 KiB
+  asset main.352cb363bee1d3f9846b.hot-update.js 30.4 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.352cb363bee1d3f9846b.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.95 MiB = bundle.js 1.92 MiB main.352cb363bee1d3f9846b.hot-update.js 30.4 KiB
 cached modules 1.72 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
-./src/components/MovieBingo.js 25.9 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 258 ms
-assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.95 MiB
-  asset bundle.js 1.92 MiB [emitted] (name: main)
-  asset main.7fb8523179a5475f9380.hot-update.js 31.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.7fb8523179a5475f9380.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.95 MiB = bundle.js 1.92 MiB main.7fb8523179a5475f9380.hot-update.js 31.2 KiB
-cached modules 1.72 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CharacterMovieMatch.js 25.4 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 125 ms
+./src/components/MovieBingo.js 26 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 268 ms
