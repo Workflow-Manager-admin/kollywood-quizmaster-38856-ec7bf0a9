@@ -11,26 +11,25 @@ function shuffle(array) {
   return arr;
 }
 
-// PUBLIC_INTERFACE
+/**
+ * CharacterMovieMatch game, harder edition:
+ * - Instead of using main characters only, prefer less prominent (not lead/top-billed) characters as clues.
+ * - Actor names in parentheses are **no longer shown** in clues.
+ * - Only character names appear in clue chips.
+ * - TMDb data filters out generic ("Self") and too short/empty, and also skips always top-3-billed characters when valid harder choices exist.
+ */
 function CharacterMovieMatch({ onResult }) {
-  /**
-   * Character-Movie Match Game (Enhanced):
-   * Shows several Kollywood movie posters as drag-drop targets;
-   * User is given character/actor clues and must drag each clue onto the correct movie poster.
-   * Includes all required poster fetching, error handling, feedback, and drag drop logic.
-   */
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pairs, setPairs] = useState([]); // [{movieTitle, poster_path, char, castName, movieId}]
+  const [pairs, setPairs] = useState([]); // [{movieTitle, poster_path, char, movieId}]
   const [clues, setClues] = useState([]); // [{text, idx}]
-  const [options, setOptions] = useState([]); // poster array, shuffled
-  const [assignments, setAssignments] = useState({}); // { posterIdx: clueIdx }
-  const [dragging, setDragging] = useState(null); // clue idx being dragged
-  const [status, setStatus] = useState("playing"); // playing | submitted | revealed
-  const [feedback, setFeedback] = useState({}); // posterIdx -> "correct"/"wrong"
+  const [options, setOptions] = useState([]);
+  const [assignments, setAssignments] = useState({});
+  const [dragging, setDragging] = useState(null);
+  const [status, setStatus] = useState("playing");
+  const [feedback, setFeedback] = useState({});
   const [score, setScore] = useState(null);
 
-  // Load question posters/characters - at least 3 movies with suitable posters/character clues
   useEffect(() => {
     let ignore = false;
     async function load() {
@@ -42,55 +41,82 @@ function CharacterMovieMatch({ onResult }) {
       setOptions([]);
       setFeedback({});
       setStatus("playing");
-      // Find 3-4 unique movies with actual posters and main actor/character
+      // We want 3-4 movies with less obvious/less-main character clues
       try {
         const page = Math.floor(Math.random() * 3) + 1;
         const data = await fetchPopularKollywoodMovies(page);
         if (!Array.isArray(data.results) || data.results.length < 5)
           throw new Error("TMDb didn't return enough Kollywood movies. Try again later.");
-        // Filter out movies without posters
+        // Must have posters
         const posterMovies = data.results.filter(m => !!m.poster_path && !!m.id);
         if (posterMovies.length < 3)
           throw new Error("Not enough Kollywood movie posters available now. Try refresh.");
-        // Pick 3 random movies (use 3 for drag-drop challenge and layout simplicity)
-        let candidates = shuffle(posterMovies).slice(0, 6); // grab more, then filter by credits
-        // Fetch movie credits for character/actor clues
+        // Try with more movies to ensure harder clues
+        let candidates = shuffle(posterMovies).slice(0, 8);
         let pairsArr = [];
         for (let i = 0; i < candidates.length && pairsArr.length < 3; i++) {
           let det;
           try {
             det = await fetchMovieDetails(candidates[i].id);
-          } catch (e) {
-            continue; // skip if details not loadable
+          } catch {
+            continue;
           }
-          // Take the first cast member with a non-empty character/clue
-          let cc = (det.credits?.cast || []).find(actor => actor.character && actor.name);
-          if (!cc) continue;
-          // Avoid extremely generic names like "Self" or empty strings
-          if (/^self$/i.test(cc.character.trim()) || cc.character.length < 2) continue;
-          pairsArr.push({
-            movieTitle: det.title,
-            poster_path: det.poster_path,
-            char: cc.character,
-            castName: cc.name,
-            movieId: det.id
-          });
+          // Find a less 'main' character with a valid character name
+          // Try to pick someone outside top 2 billing, else take whatever valid is there
+          const cast = Array.isArray(det.credits?.cast) ? det.credits.cast : [];
+          // Exclude generic "Self" or empty, extremely short or only whitespace, also skip "uncredited"
+          const hardCast = cast.filter(
+            actor =>
+              actor &&
+              actor.character &&
+              !/^self$/i.test(actor.character.trim()) &&
+              actor.character.trim().length > 1 &&
+              !/uncredited/i.test(actor.character) &&
+              !/crowd/i.test(actor.character)
+          );
+          // Sort by order/billing (lower = more prominent)
+          const sortedHardCast = [...hardCast].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+          // Try to pick from lower billing unless there are only few
+          let chosen = null;
+          if (sortedHardCast.length > 5) {
+            // Pick randomly among 4th-8th billing (index [3,7]), to make harder, else from rest
+            const range = sortedHardCast.slice(3, 9);
+            if (range.length) {
+              chosen = shuffle(range)[0];
+            }
+          }
+          if (!chosen && sortedHardCast.length) {
+            // fallback: pick one from lower half if possible
+            if (sortedHardCast.length > 3) {
+              chosen = sortedHardCast[Math.floor(sortedHardCast.length / 2)];
+            } else {
+              chosen = sortedHardCast[0];
+            }
+          }
+          // Do NOT include actor names in clue anymore; only character name
+          if (chosen && chosen.character && chosen.character.trim().length > 1) {
+            pairsArr.push({
+              movieTitle: det.title,
+              poster_path: det.poster_path,
+              char: chosen.character,
+              movieId: det.id
+            });
+          }
         }
         if (pairsArr.length < 3)
-          throw new Error("Couldn't retrieve enough movies with suitable character clues. Try again.");
-        // Shuffle to increase challenge with visually similar posters
+          throw new Error("Couldn't retrieve enough movies with suitable hard character clues. Try again.");
+        // Shuffle to increase challenge with visually similar posters and clues
         const shuffledOptions = shuffle(pairsArr);
-        // Prepare clues as objects, then shuffle them for drag-n-drop
         const clueObjs = shuffle(
           shuffledOptions.map((p, idx) => ({
-            text: `${p.char} (${p.castName})`,
+            text: `${p.char}`,
             idx: idx,
             assigned: false
           }))
         );
         if (ignore) return;
         setPairs(shuffledOptions);
-        setOptions(shuffledOptions); // this is array of posters, mapping idx to clue idx
+        setOptions(shuffledOptions);
         setClues(clueObjs);
       } catch (e) {
         setError(e.message || "Failed to generate the quiz. Please try again.");
@@ -171,6 +197,7 @@ function CharacterMovieMatch({ onResult }) {
   // Utility: Get clue chip text from clue idx (used to render assigned clues)
   function getClueText(clueIdx) {
     const cc = clues[clueIdx];
+    // Show only character name (actor names omitted per requirements)
     return cc ? cc.text : "";
   }
 
