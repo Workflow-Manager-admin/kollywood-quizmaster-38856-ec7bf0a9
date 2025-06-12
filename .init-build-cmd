@@ -1,0 +1,4 @@
+{
+    "command": "npm install && npx tsc --noEmit && npm test -- --ci",
+    "working_directory": "/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster"
+}
