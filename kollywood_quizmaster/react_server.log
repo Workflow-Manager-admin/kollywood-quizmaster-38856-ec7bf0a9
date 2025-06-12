@@ -7,105 +7,18 @@
 <i> [webpack-dev-server] On Your Network (IPv4): http://172.17.0.2:3000/
 <i> [webpack-dev-server] Content not from webpack is served from './public' directory
 Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
-asset bundle.js 1.96 MiB [emitted] (name: main)
+asset bundle.js 1.97 MiB [emitted] (name: main)
 asset index.html 1020 bytes [emitted]
 runtime modules 27.5 KiB 14 modules
 orphan modules 12.8 KiB [orphan] 3 modules
-cacheable modules 1.75 MiB
+cacheable modules 1.77 MiB
   modules by path ./node_modules/ 1.61 MiB 34 modules
-  modules by path ./src/ 133 KiB
-    modules by path ./src/components/*.js 110 KiB 11 modules
+  modules by path ./src/ 151 KiB
+    modules by path ./src/components/*.js 128 KiB 11 modules
     modules by path ./src/*.css 10.6 KiB 4 modules
     modules by path ./src/*.js 12.4 KiB 3 modules
   modules by path ./.ve/ 15.1 KiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-
-ERROR in ./src/components/CastCombo.js
-Module build failed (from ./node_modules/babel-loader/lib/index.js):
-SyntaxError: /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components/CastCombo.js: Unterminated JSX contents. (464:10)
-
-  462 |         </div>
-  463 |       )}
-> 464 |     </div>
-      |           ^
-  465 |   );
-  466 | }
-  467 |
-    at constructor (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:363:19)
-    at JSXParserMixin.raise (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:6609:19)
-    at JSXParserMixin.jsxReadToken (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4460:20)
-    at JSXParserMixin.getTokenFromCode (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4786:12)
-    at JSXParserMixin.nextToken (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:5792:10)
-    at JSXParserMixin.next (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:5702:10)
-    at JSXParserMixin.eat (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:5706:12)
-    at JSXParserMixin.expect (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:6909:15)
-    at JSXParserMixin.jsxParseClosingElementAt (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4692:10)
-    at JSXParserMixin.jsxParseElementAt (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4707:37)
-    at JSXParserMixin.jsxParseElementAt (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4710:32)
-    at JSXParserMixin.jsxParseElement (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4761:17)
-    at JSXParserMixin.parseExprAtom (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4771:19)
-    at JSXParserMixin.parseExprSubscripts (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:11012:23)
-    at JSXParserMixin.parseUpdate (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10997:21)
-    at JSXParserMixin.parseMaybeUnary (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10977:23)
-    at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10830:61)
-    at JSXParserMixin.parseExprOps (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10835:23)
-    at JSXParserMixin.parseMaybeConditional (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10812:23)
-    at JSXParserMixin.parseMaybeAssign (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10765:21)
-    at /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10734:39
-    at JSXParserMixin.allowInAnd (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12361:12)
-    at JSXParserMixin.parseMaybeAssignAllowIn (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10734:17)
-    at JSXParserMixin.parseParenAndDistinguishExpression (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:11608:28)
-    at JSXParserMixin.parseExprAtom (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:11262:23)
-    at JSXParserMixin.parseExprAtom (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:4776:20)
-    at JSXParserMixin.parseExprSubscripts (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:11012:23)
-    at JSXParserMixin.parseUpdate (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10997:21)
-    at JSXParserMixin.parseMaybeUnary (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10977:23)
-    at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10830:61)
-    at JSXParserMixin.parseExprOps (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10835:23)
-    at JSXParserMixin.parseMaybeConditional (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10812:23)
-    at JSXParserMixin.parseMaybeAssign (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10765:21)
-    at JSXParserMixin.parseExpressionBase (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10718:23)
-    at /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10714:39
-    at JSXParserMixin.allowInAnd (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12356:16)
-    at JSXParserMixin.parseExpression (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:10714:17)
-    at JSXParserMixin.parseReturnStatement (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13061:28)
-    at JSXParserMixin.parseStatementContent (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12716:21)
-    at JSXParserMixin.parseStatementLike (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12685:17)
-    at JSXParserMixin.parseStatementListItem (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12665:17)
-    at JSXParserMixin.parseBlockOrModuleBlockBody (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13235:61)
-    at JSXParserMixin.parseBlockBody (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13228:10)
-    at JSXParserMixin.parseBlock (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13216:10)
-    at JSXParserMixin.parseFunctionBody (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12035:24)
-    at JSXParserMixin.parseFunctionBodyAndFinish (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12021:10)
-    at /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13360:12
-    at JSXParserMixin.withSmartMixTopicForbiddingContext (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:12338:14)
-    at JSXParserMixin.parseFunction (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13359:10)
-    at JSXParserMixin.parseFunctionStatement (/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/@babel/parser/lib/index.js:13044:17)
- @ ./src/App.js 12:0-47 159:46-55
- @ ./src/index.js 5:0-24 19:32-35
-
-webpack 5.99.9 compiled with 1 error in 1912 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 2.01 MiB
-  asset bundle.js 1.97 MiB [emitted] (name: main)
-  asset main.6ee750e61683b85602d1.hot-update.js 35.9 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.6ee750e61683b85602d1.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 2.01 MiB = bundle.js 1.97 MiB main.6ee750e61683b85602d1.hot-update.js 35.9 KiB
-cached modules 1.76 MiB [cached] 58 modules
-runtime modules 27.5 KiB 14 modules
-javascript modules 24.6 KiB
-  ./src/App.js 6.75 KiB [code generated]
-  ./src/components/CastCombo.js 17.9 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 108 ms
-assets by status 1020 bytes [cached] 1 asset
-assets by path *.js 1.99 MiB
-  asset bundle.js 1.97 MiB [emitted] (name: main)
-  asset main.7ae22fc2791300f5448c.hot-update.js 23.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.7ae22fc2791300f5448c.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.99 MiB = bundle.js 1.97 MiB main.7ae22fc2791300f5448c.hot-update.js 23.2 KiB
-cached modules 1.77 MiB [cached] 59 modules
-runtime modules 27.5 KiB 14 modules
-./src/components/CastCombo.js 17.9 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 140 ms
+webpack 5.99.9 compiled successfully in 2007 ms
