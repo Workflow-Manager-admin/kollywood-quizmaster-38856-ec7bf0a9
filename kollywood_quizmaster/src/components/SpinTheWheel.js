@@ -14,12 +14,12 @@ function SpinTheWheel() {
   const [questions, setQuestions] = useState([]);
   const [step, setStep] = useState(0);
 
-  // For current round:
+  // Core state for this round/step
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelAngle, setWheelAngle] = useState(0);
-  const [showWheel, setShowWheel] = useState(true);
-  const [spinResult, setSpinResult] = useState(null); // {actor, actress, year, movie}
-  const [movieOptions, setMovieOptions] = useState([]);
+  const [showWheel, setShowWheel] = useState(true); // Show wheel or clues/options/question
+  const [clueSet, setClueSet] = useState(null); // { actor, actress, year, movie }
+  const [movieOptions, setMovieOptions] = useState([]); // [movie, ...distractors]
   const [selected, setSelected] = useState(null);
   const [reveal, setReveal] = useState(false);
   const [results, setResults] = useState([]);
@@ -28,21 +28,22 @@ function SpinTheWheel() {
 
   const navigate = useNavigate();
 
-  // Fetch Tamil movies once at mount for building dataset
+  // Fetch data pool on mount
   useEffect(() => {
     setLoading(true);
-    discoverTamilMovies({ sort_by: "popularity.desc", page: 3 }).then(movies => {
-      // Filter valid entries (need poster or cast, avoid broken data)
-      const filtered = movies.filter(m =>
-        m &&
-        m.id &&
-        m.title &&
-        m.release_date &&
-        typeof m.title === "string" &&
-        typeof m.release_date === "string" &&
-        m.release_date.length >= 4
+    discoverTamilMovies({ sort_by: "popularity.desc", page: 3 }).then((movies) => {
+      // Accept valid movies only
+      const filtered = movies.filter(
+        (m) =>
+          m &&
+          m.id &&
+          m.title &&
+          m.release_date &&
+          typeof m.title === "string" &&
+          typeof m.release_date === "string" &&
+          m.release_date.length >= 4
       );
-      setQuestions(filtered.slice(0, TOTAL * 3)); // room for distractor pool
+      setQuestions(filtered.slice(0, TOTAL * 3)); // Room for distractors
       setLoading(false);
     }).catch(() => {
       setError("Failed to load TMDb movies. Please refresh.");
@@ -50,34 +51,30 @@ function SpinTheWheel() {
     });
   }, []);
 
-  // Triggered WHEN user spins (user clicks SPIN) —
-  // Randomly pick a movie, fetch cast (actor+actress), and set clues.
+  // Main animation and clue picking for a single spin
   async function handleSpin() {
     if (isSpinning || loading) return;
     setSelected(null);
     setReveal(false);
     setShowWheel(true);
-    setSpinResult(null);
-
-    // Animate: 5s spin, ease out (randomized total angle per round)
-    const segments = 8; // Wheel divided for visual effect only
+    setClueSet(null);
+    setMovieOptions([]);
+    // Animate the wheel for effect — after spin is over, all clues are revealed and player proceeds immediately.
+    const segments = 8;
     const anglePerSegment = 360 / segments;
-    // We'll "land" on a random segment to indicate visually, but clues are random.
     const finalSegment = Math.floor(Math.random() * segments);
-    const extraSpins = 6; // Number of full 360s before stopping
-    const finalAngle = 360 * extraSpins + finalSegment * anglePerSegment + (anglePerSegment/2);
+    const extraSpins = 6;
+    const finalAngle = 360 * extraSpins + finalSegment * anglePerSegment + anglePerSegment / 2;
     setIsSpinning(true);
-
     let current = wheelAngle;
     let startTs = null;
 
-    // Animate the wheel: ease out cubic
     function animate(ts) {
       if (!startTs) startTs = ts;
       const duration = 2200; // ms
       const elapsed = ts - startTs;
       const progress = Math.min(elapsed / duration, 1);
-      // Cubic ease-out
+      // Cubic ease out
       const easeOut = (t) => --t * t * t + 1;
       const easedProgress = easeOut(progress);
       const angle = current + (finalAngle - current) * easedProgress;
@@ -87,130 +84,139 @@ function SpinTheWheel() {
         requestAnimationFrame(animate);
       } else {
         setWheelAngle(finalAngle % 360);
-        setTimeout(() => setIsSpinning(false), 200); // minor post-spin delay
-        handlePickClues();
+        setTimeout(() => setIsSpinning(false), 200);
+        // After wheel spin is complete, show all three clues together automatically and transition to question UI
+        setTimeout(pickSpinCluesAndOptions, 420);
       }
     }
     requestAnimationFrame(animate);
   }
 
-  // Once wheel is "spun", pick actor/actress/year clues and movie pool
-  async function handlePickClues() {
-    // Wait just after wheel stops for effect
-    setTimeout(async () => {
-      // For each round/step, use a dedicated subset for correct/distractors
-      const qIdx = (step * 2) % Math.max(questions.length, 1);
-      let baseMovie = questions[qIdx];
-      // Try another if TMDb returns junk/empty
-      for (let off=0; off<4; ++off) {
-        if (!baseMovie) baseMovie = questions[(qIdx+off)%questions.length];
-        if (baseMovie && baseMovie.id) break;
-      }
-      if (!baseMovie || !baseMovie.id) {
-        setError("Could not find a valid movie from TMDb.");
-        setShowWheel(false);
-        return;
-      }
-      // Fetch cast and movie details to pick clues and options
-      let cast, details;
-      try {
-        [cast, details] = await Promise.all([
-          getMovieCast(baseMovie.id),
-          getMovieDetails(baseMovie.id)
-        ]);
-      } catch {
-        setError("Could not fetch movie/cast details from TMDb.");
-        setShowWheel(false);
-        return;
-      }
+  // All-at-once clue picking and option setup, triggered after spin animation
+  async function pickSpinCluesAndOptions() {
+    // Steps: get current base movie and build clues/distractors/options
+    const qIdx = (step * 2) % Math.max(questions.length, 1);
+    let baseMovie = questions[qIdx];
+    for (let off = 0; off < 4; ++off) {
+      if (!baseMovie) baseMovie = questions[(qIdx + off) % questions.length];
+      if (baseMovie && baseMovie.id) break;
+    }
+    if (!baseMovie || !baseMovie.id) {
+      setError("Could not find a valid movie from TMDb.");
+      setShowWheel(false);
+      return;
+    }
+    let cast, details;
+    try {
+      [cast, details] = await Promise.all([
+        getMovieCast(baseMovie.id),
+        getMovieDetails(baseMovie.id),
+      ]);
+    } catch {
+      setError("Could not fetch movie/cast details from TMDb.");
+      setShowWheel(false);
+      return;
+    }
 
-      // Get main actor (male), actress (female) for clues. Some movies may not have both!
-      let actor = "", actress = "";
-
-      if (Array.isArray(cast)) {
-        // Try to get a male actor
-        const mActor = cast.find(c => c.known_for_department === "Acting" && c.gender === 2 && c.name);
-        actor = mActor?.name || "";
-        // Try to get a female actress
-        const fActress = cast.find(c => c.known_for_department === "Acting" && c.gender === 1 && c.name);
-        actress = fActress?.name || "";
-        // fallback
-        if (!actor && cast.length) actor = cast[0].name;
-        if (!actress) {
-          // Try second female if available
-          const alt = cast.find(c => c.gender === 1 || (c.gender === 0 && c.name && c.name !== actor));
-          actress = alt?.name || "Clue unavailable";
-        }
-        if (!actor) actor = "Clue unavailable";
-      } else {
-        actor = "Clue unavailable";
-        actress = "Clue unavailable";
+    // Actor/Actress picking heuristics
+    let actor = "", actress = "";
+    if (Array.isArray(cast)) {
+      const mActor = cast.find((c) => c.known_for_department === "Acting" && c.gender === 2 && c.name);
+      actor = mActor?.name || "";
+      const fActress = cast.find((c) => c.known_for_department === "Acting" && c.gender === 1 && c.name);
+      actress = fActress?.name || "";
+      // fallback
+      if (!actor && cast.length) actor = cast[0].name;
+      if (!actress) {
+        const alt = cast.find((c) => c.gender === 1 || (c.gender === 0 && c.name && c.name !== actor));
+        actress = alt?.name || "Clue unavailable";
       }
-      // Use year as short clue
-      const year = baseMovie.release_date ? baseMovie.release_date.slice(0, 4) : "?";
+      if (!actor) actor = "Clue unavailable";
+    } else {
+      actor = "Clue unavailable";
+      actress = "Clue unavailable";
+    }
+    const year = baseMovie.release_date ? baseMovie.release_date.slice(0, 4) : "?";
 
-      // Pick distractor movies: exclude the correct one, pick 2, options shuffled
-      let optionMovies = [baseMovie];
-      let distractors = [];
-      // Pool from questions, exclude already used ID
-      let rest = questions.filter(m => m && m.id !== baseMovie.id && m.title);
-      // Prefer same-decade (for realism); fallback to any
-      const sameDecade = rest.filter(m => m.release_date && m.release_date.slice(0,3) === year.slice(0,3));
-      const distractorPool = sameDecade.length >= 2 ? sameDecade : rest;
-      while (distractors.length < 2 && distractorPool.length) {
-        const idx = Math.floor(Math.random() * distractorPool.length);
-        const d = distractorPool.splice(idx,1)[0];
-        if (d && d.title && !optionMovies.find(x=>x.id === d.id)) {
-          distractors.push(d);
-        }
-      }
-      optionMovies = [...optionMovies, ...distractors];
-      // Enrich movie clues for UI
-      setSpinResult({ actor, actress, year, movie: baseMovie.title });
-      setMovieOptions(optionMovies.sort(() => Math.random() - 0.5));
-      setShowWheel(false); // show clues/options screen
-    }, 430);
+    // Distractor movie building: pick 2 others, mixing decade if possible
+    let optionMovies = [baseMovie];
+    let distractors = [];
+    let rest = questions.filter((m) => m && m.id !== baseMovie.id && m.title);
+    const sameDecade = rest.filter((m) => m.release_date && m.release_date.slice(0, 3) === year.slice(0, 3));
+    const distractorPool = sameDecade.length >= 2 ? sameDecade : rest;
+    while (distractors.length < 2 && distractorPool.length) {
+      const idx = Math.floor(Math.random() * distractorPool.length);
+      const d = distractorPool.splice(idx, 1)[0];
+      if (d && d.title && !optionMovies.find((x) => x.id === d.id)) distractors.push(d);
+    }
+    optionMovies = [...optionMovies, ...distractors].sort(() => Math.random() - 0.5);
+
+    setClueSet({
+      actor,
+      actress,
+      year,
+      movie: baseMovie.title,
+    });
+    setMovieOptions(optionMovies);
+    setShowWheel(false); // Switch: now show clues and question UI
   }
 
-  // User submits guess
+  // When user chooses and submits answer to guess the movie
   function checkAnswer() {
-    if (!spinResult || !selected) return;
-    const ok = selected === spinResult.movie;
-    setResults((arr) => ([...arr, {
-      correct: ok,
-      picked: selected,
-      solution: spinResult.movie
-    }]));
+    if (!clueSet || !selected) return;
+    const ok = selected === clueSet.movie;
+    setResults((arr) => [
+      ...arr,
+      {
+        correct: ok,
+        picked: selected,
+        solution: clueSet.movie,
+      },
+    ]);
     setReveal(true);
     setTimeout(() => {
       if (step + 1 === TOTAL) {
         navigate("/summary/spin-the-wheel", {
-          state: { results: [...results, { correct: ok, picked: selected, solution: spinResult.movie }] }
+          state: {
+            results: [
+              ...results,
+              { correct: ok, picked: selected, solution: clueSet.movie },
+            ],
+          },
         });
       } else {
-        resetForNext();
+        stepToNextRound();
       }
     }, 1500);
   }
 
-  function resetForNext() {
-    setStep(step => step + 1);
+  function stepToNextRound() {
+    setStep((prev) => prev + 1);
     setSelected(null);
     setReveal(false);
-    setShowWheel(true);
-    setSpinResult(null);
+    setShowWheel(true); // Re-show wheel for next round
+    setClueSet(null);
     setMovieOptions([]);
-    setWheelAngle((prev) => prev + Math.floor(Math.random() * 90)); // vary wheel
+    setWheelAngle((prev) => prev + Math.floor(Math.random() * 90));
   }
 
-  // Main rendering
+  // Render flow: wheel, or (clue + guess-question)
   if (loading)
     return (
-      <div className="kq-center kq-mt25"><div className="kq-quiz-panel">Loading Spin the Wheel...<br />🎡</div></div>
+      <div className="kq-center kq-mt25">
+        <div className="kq-quiz-panel">
+          Loading Spin the Wheel...<br />
+          🎡
+        </div>
+      </div>
     );
   if (error)
     return (
-      <div className="kq-center kq-mt25"><div className="kq-quiz-panel" style={{ color: "#b51b3b" }}>{error}</div></div>
+      <div className="kq-center kq-mt25">
+        <div className="kq-quiz-panel" style={{ color: "#b51b3b" }}>
+          {error}
+        </div>
+      </div>
     );
 
   return (
@@ -219,18 +225,28 @@ function SpinTheWheel() {
         <QuizProgressBar step={step} total={TOTAL} />
         {showWheel ? (
           // ==== Spinning Wheel UI ====
-          <div style={{
-            margin: "32px auto 8px auto",
-            width: 220, height: 220, position: "relative",
-            display: "flex", flexDirection: "column", alignItems: "center"
-          }}>
+          <div
+            style={{
+              margin: "32px auto 8px auto",
+              width: 220,
+              height: 220,
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             <WheelView spinning={isSpinning} angle={wheelAngle} highlightIdx={isSpinning ? -1 : null} />
             <button
               className="kq-btn"
               onClick={handleSpin}
               style={{
-                fontWeight: 700, fontSize: "1.14em", marginTop: 14,
-                padding: "13px 27px", borderRadius: 20, letterSpacing: "1.5px"
+                fontWeight: 700,
+                fontSize: "1.14em",
+                marginTop: 14,
+                padding: "13px 27px",
+                borderRadius: 20,
+                letterSpacing: "1.5px",
               }}
               disabled={isSpinning}
             >
@@ -241,60 +257,97 @@ function SpinTheWheel() {
             </div>
           </div>
         ) : (
-          // ==== Show Resulting Clues, Movie Options, and Answer Prompt ====
-          <div>
-            <h3 style={{ color: "#f604c2", textAlign: "center", letterSpacing: 0.5 }}>Guess the Movie:</h3>
-            <div className="kq-quiz-clues">
-              <ul style={{
-                color: "#0b0a0a", fontSize: "1.15em", marginBottom: 3, listStyle: "disc inside",
-                paddingLeft: 8, lineHeight: "1.5"
-              }}>
-                <li><b>Actor:</b> <span style={{ color: "#b51b3b" }}>{spinResult?.actor}</span></li>
-                <li><b>Actress:</b> <span style={{ color: "#b51b3b" }}>{spinResult?.actress}</span></li>
-                <li><b>Year:</b> <span style={{ color: "#f604c2" }}>{spinResult?.year}</span></li>
-              </ul>
-            </div>
-            <div className="kq-quiz-action-bar" style={{ flexWrap: "wrap", gap: 17, marginTop: 18, marginBottom: 4, justifyContent: "center" }}>
-              {movieOptions.map((opt) => (
-                <button
-                  className="kq-btn outline"
-                  key={opt.id}
+          // ==== Show all three clues at once, immediately, and the guessing UI ====
+          clueSet && (
+            <div>
+              <h3 style={{ color: "#f604c2", textAlign: "center", letterSpacing: 0.5 }}>
+                Guess the Movie:
+              </h3>
+              <div className="kq-quiz-clues">
+                <ul
                   style={{
-                    color: selected === opt.title ? "#fff" : "#f604c2",
-                    background: selected === opt.title ? "#f604c2" : "#fff",
-                    fontWeight: "700",
-                    border: "2px solid #f604c2",
-                    minWidth: 160,
-                    marginBottom: 7,
-                    borderRadius: 9,
-                    fontSize: "1.10em",
-                    boxShadow: selected === opt.title ? "0 0 9px #f604c258" : ""
+                    color: "#0b0a0a",
+                    fontSize: "1.15em",
+                    marginBottom: 3,
+                    listStyle: "disc inside",
+                    paddingLeft: 8,
+                    lineHeight: "1.5",
                   }}
-                  onClick={() => { if (!reveal) setSelected(opt.title); }}
-                  disabled={reveal}
-                  tabIndex={0}
-                >{opt.title}</button>
-              ))}
-            </div>
-            <div className="kq-quiz-action-bar" style={{ marginTop: 8 }}>
-              <button
-                className="kq-quiz-answer-btn"
-                style={{ minWidth: 88 }}
-                onClick={checkAnswer}
-                disabled={!selected || reveal}
-              >
-                Submit
-              </button>
-            </div>
-            {reveal && (
-              <div style={{
-                marginTop: 16, background: "#f8e7f4", borderRadius: 7, padding: 11,
-                textAlign: "center", color: "#b51b3b", fontWeight: 600, fontSize: "1.13em"
-              }}>
-                The correct answer was: <b>{spinResult.movie}</b>
+                >
+                  <li>
+                    <b>Actor:</b> <span style={{ color: "#b51b3b" }}>{clueSet.actor}</span>
+                  </li>
+                  <li>
+                    <b>Actress:</b> <span style={{ color: "#b51b3b" }}>{clueSet.actress}</span>
+                  </li>
+                  <li>
+                    <b>Year:</b> <span style={{ color: "#f604c2" }}>{clueSet.year}</span>
+                  </li>
+                </ul>
               </div>
-            )}
-          </div>
+              <div
+                className="kq-quiz-action-bar"
+                style={{
+                  flexWrap: "wrap",
+                  gap: 17,
+                  marginTop: 18,
+                  marginBottom: 4,
+                  justifyContent: "center",
+                }}
+              >
+                {movieOptions.map((opt) => (
+                  <button
+                    className="kq-btn outline"
+                    key={opt.id}
+                    style={{
+                      color: selected === opt.title ? "#fff" : "#f604c2",
+                      background: selected === opt.title ? "#f604c2" : "#fff",
+                      fontWeight: "700",
+                      border: "2px solid #f604c2",
+                      minWidth: 160,
+                      marginBottom: 7,
+                      borderRadius: 9,
+                      fontSize: "1.10em",
+                      boxShadow: selected === opt.title ? "0 0 9px #f604c258" : "",
+                    }}
+                    onClick={() => {
+                      if (!reveal) setSelected(opt.title);
+                    }}
+                    disabled={reveal}
+                    tabIndex={0}
+                  >
+                    {opt.title}
+                  </button>
+                ))}
+              </div>
+              <div className="kq-quiz-action-bar" style={{ marginTop: 8 }}>
+                <button
+                  className="kq-quiz-answer-btn"
+                  style={{ minWidth: 88 }}
+                  onClick={checkAnswer}
+                  disabled={!selected || reveal}
+                >
+                  Submit
+                </button>
+              </div>
+              {reveal && (
+                <div
+                  style={{
+                    marginTop: 16,
+                    background: "#f8e7f4",
+                    borderRadius: 7,
+                    padding: 11,
+                    textAlign: "center",
+                    color: "#b51b3b",
+                    fontWeight: 600,
+                    fontSize: "1.13em",
+                  }}
+                >
+                  The correct answer was: <b>{clueSet.movie}</b>
+                </div>
+              )}
+            </div>
+          )
         )}
       </div>
     </div>

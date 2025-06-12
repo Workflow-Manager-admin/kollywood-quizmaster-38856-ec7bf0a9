@@ -7,37 +7,32 @@
 <i> [webpack-dev-server] On Your Network (IPv4): http://172.17.0.2:3000/
 <i> [webpack-dev-server] Content not from webpack is served from './public' directory
 Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
-asset bundle.js 1.94 MiB [emitted] (name: main)
+asset bundle.js 1.95 MiB [emitted] (name: main)
 asset index.html 1.92 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 orphan modules 12.8 KiB [orphan] 3 modules
-cacheable modules 1.74 MiB
+cacheable modules 1.76 MiB
   modules by path ./node_modules/ 1.61 MiB 34 modules
-  modules by path ./src/ 122 KiB
-    modules by path ./src/components/*.js 99 KiB 10 modules
+  modules by path ./src/ 135 KiB
+    modules by path ./src/components/*.js 112 KiB 10 modules
     modules by path ./src/*.css 10.6 KiB 4 modules
     modules by path ./src/*.js 12.4 KiB 3 modules
   modules by path ./.ve/ 15.1 KiB
     modules by path ./.ve/*.js 10.6 KiB 2 modules
     modules by path ./.ve/*.css 2.93 KiB 2 modules
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1917 ms
+webpack 5.99.9 compiled successfully in 1954 ms
 assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.98 MiB
+assets by path *.js 1.97 MiB
   asset bundle.js 1.95 MiB [emitted] (name: main)
-  asset main.238c018515e6d16acc64.hot-update.js 25.2 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.238c018515e6d16acc64.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.98 MiB = bundle.js 1.95 MiB main.238c018515e6d16acc64.hot-update.js 25.2 KiB
+  asset main.9493b39ce3f18828a25c.hot-update.js 24.5 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.9493b39ce3f18828a25c.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.97 MiB = bundle.js 1.95 MiB main.9493b39ce3f18828a25c.hot-update.js 24.5 KiB
 cached modules 1.75 MiB [cached] 58 modules
 runtime modules 27.5 KiB 14 modules
-./src/components/SpinTheWheel.js 19.5 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 211 ms
+./src/components/SpinTheWheel.js 18.8 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 232 ms
 assets by status 1.95 MiB [cached] 2 assets
 cached modules 1.76 MiB (javascript) 27.5 KiB (runtime) [cached] 72 modules
 ./src/App.js 6.75 KiB [built]
-webpack 5.99.9 compiled successfully in 69 ms
-Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
-assets by status 1.95 MiB [cached] 2 assets
-cached modules 1.77 MiB (javascript) 27.5 KiB (runtime) [cached] 72 modules
-./src/index.js 830 bytes [built]
-webpack 5.99.9 compiled successfully in 51 ms
+webpack 5.99.9 compiled successfully in 74 ms
