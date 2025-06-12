@@ -86,7 +86,7 @@ SyntaxError: /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec
  @ ./src/App.js 12:0-47 159:46-55
  @ ./src/index.js 5:0-24 19:32-35
 
-webpack 5.99.9 compiled with 1 error in 2081 ms
+webpack 5.99.9 compiled with 1 error in 1908 ms
 assets by status 1020 bytes [cached] 1 asset
 assets by path *.js 1.96 MiB
   asset bundle.js 1.96 MiB [emitted] (name: main)
@@ -161,7 +161,7 @@ SyntaxError: /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec
  @ ./src/App.js 12:0-47 159:46-55
  @ ./src/index.js 5:0-24 19:32-35
 
-webpack 5.99.9 compiled with 1 error in 56 ms
+webpack 5.99.9 compiled with 1 error in 68 ms
 assets by status 1.96 MiB [cached] 2 assets
 cached modules 1.74 MiB (javascript) 27.5 KiB (runtime) [cached] 72 modules
 javascript modules 27.8 KiB
@@ -232,4 +232,4 @@ SyntaxError: /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec
  @ ./src/App.js 12:0-47 159:46-55
  @ ./src/index.js 5:0-24 19:32-35
 
-webpack 5.99.9 compiled with 1 error in 100 ms
+webpack 5.99.9 compiled with 1 error in 90 ms
