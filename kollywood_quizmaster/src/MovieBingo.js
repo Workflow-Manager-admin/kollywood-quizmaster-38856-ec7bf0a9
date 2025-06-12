@@ -54,10 +54,23 @@ function MovieBingo({ onResult, availableCategories, setAvailableCategories }) {
       setAvailableCategories(shuffle([...bingoCategoriesMaster]));
       return;
     }
-    // On each round, pick a random available category (unique for session).
-    const rndIdx = Math.floor(Math.random() * availableCategories.length);
-    const chosenCat = availableCategories[rndIdx];
+    // Draw a unique category by sampling one, using it, and removing from pool BEFORE grid loads.
+    // (This avoids any edge race if data fetching fails and ensures UI consistency.)
+    let chosenCat, remainingPool;
+    if (availableCategories.length === 1) {
+      // Only one left, use it and pool will be empty for next round
+      chosenCat = availableCategories[0];
+      remainingPool = [];
+    } else {
+      // Pick randomly
+      const idx = Math.floor(Math.random() * availableCategories.length);
+      chosenCat = availableCategories[idx];
+      remainingPool = [...availableCategories];
+      remainingPool.splice(idx, 1);
+    }
     setCategory(chosenCat);
+    // Remove it from the session's pool
+    setAvailableCategories(remainingPool);
 
     let ignore = false;
     async function loadGrid() {
@@ -69,10 +82,7 @@ function MovieBingo({ onResult, availableCategories, setAvailableCategories }) {
       setGridDisabled(false);
       setCorrectIdx(null);
 
-      // Remove the chosen category from available categories (avoid repeats).
-      setAvailableCategories(prev => prev.filter((x, i) => i !== rndIdx));
-
-      // ===== GRID LOADING CODE remains unchanged =====
+      // ------- GRID LOADING CODE remains unchanged -------
       let found = [];
       let correctMovie = null;
       let page = 1;
