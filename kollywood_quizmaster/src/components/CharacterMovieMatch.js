@@ -13,6 +13,7 @@ import QuizProgressBar from "./QuizProgressBar";
  * Ensure no use of PUBLIC_URL (must use process.env.PUBLIC_URL for React scripts).
  */
 // [NO direct usage found in this file.]
+// Fix: If used elsewhere, always use process.env.PUBLIC_URL -- do NOT reference PUBLIC_URL directly.
 // If used elsewhere in the repo, please ensure all uses are replaced with process.env.PUBLIC_URL.
 // There are no direct uses of PUBLIC_URL here, so this note is for reference only.
 // PUBLIC_INTERFACE
