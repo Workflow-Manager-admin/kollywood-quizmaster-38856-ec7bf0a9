@@ -16,109 +16,190 @@ const bingoCategories = [
 
 // Helper
 function shuffle(arr) {
+  // Defensive: ensure arr exists and is array
+  if (!Array.isArray(arr)) return [];
   return arr.sort(() => Math.random() - 0.5);
 }
 
 // PUBLIC_INTERFACE
 function MovieBingo({ onResult }) {
   /**
-   * Movie Bingo: 3x3 grid of movie titles, click to mark movies that fit category clue. Reveal, show answers, results.
+   * Movie Bingo: 3x3 grid of movies, but ONLY ONE grid cell (movie) can be selected per category/question.
+   * Clicking a cell locks the answer: cell colors green for correct answer, red for wrong. Cannot change after selection.
+   * Robust to rapid or duplicate clicks and missing data edge cases.
    */
   const [category, setCategory] = useState(null);
-  const [movies, setMovies] = useState([]);
-  const [selected, setSelected] = useState({});
-  const [status, setStatus] = useState("loading"); // loading | ready | submitted | revealed
+  const [movies, setMovies] = useState([]); // [{id, title}]
+  const [status, setStatus] = useState("loading"); // loading | ready | locked | revealed | error
   const [error, setError] = useState("");
+  const [correctIdx, setCorrectIdx] = useState(null); // index (0-8) of the one correct cell for the category
+  const [selectedIdx, setSelectedIdx] = useState(null); // index of user's chosen cell
+  const [isCorrect, setIsCorrect] = useState(null); // boolean: correct/wrong/null
+
+  // Defensive, for async race avoidance
+  const [gridDisabled, setGridDisabled] = useState(false);
 
   useEffect(() => {
     let ignore = false;
     async function loadGrid() {
       setStatus("loading");
       setError("");
-      setSelected({});
       setMovies([]);
-      // pick a random bingo category
+      setSelectedIdx(null);
+      setCategory(null);
+      setIsCorrect(null);
+      setGridDisabled(false);
+      setCorrectIdx(null);
+
+      // Pick random category
       const chosenCat = shuffle(bingoCategories)[0];
       setCategory(chosenCat);
-      // detemine filter logic
+
+      // Determine filter logic and load at least 9 grid movies and one true match/correct answer
       let found = [];
+      let correctMovie = null;
+      let correctIdxTmp = null;
+
       let page = 1;
       try {
-        // Keep trying next page until we have 9 movies
-        while (found.length < 9 && page < 7) {
+        // --- 1. Find at least 1 movie that REALLY matches the category ---
+        let correctOptions = [];
+        while (correctOptions.length < 1 && page < 7) {
           const d = await fetchPopularKollywoodMovies(page++);
-          if (!d || !Array.isArray(d.results))
-            throw new Error("TMDb/network error while loading movies for Bingo.");
+          if (!d || !Array.isArray(d.results)) throw new Error("TMDb/network error while loading movies for Bingo.");
           for (const m of d.results) {
-            if (found.length >= 9) break;
-            // filter by category property
             let match = false;
-            if (chosenCat.genreId && m.genre_ids.includes(chosenCat.genreId))
-              match = true;
-            else if (
-              chosenCat.yearFrom &&
-              m.release_date &&
-              parseInt(m.release_date.slice(0, 4), 10) >= chosenCat.yearFrom
-            )
-              match = true;
-            else if (chosenCat.minVotes && m.vote_count > chosenCat.minVotes)
-              match = true;
-            else if (chosenCat.minRating && m.vote_average > chosenCat.minRating)
-              match = true;
+            if (chosenCat.genreId && m.genre_ids.includes(chosenCat.genreId)) match = true;
+            else if (chosenCat.yearFrom && m.release_date && parseInt(m.release_date.slice(0, 4), 10) >= chosenCat.yearFrom) match = true;
+            else if (chosenCat.minVotes && m.vote_count > chosenCat.minVotes) match = true;
+            else if (chosenCat.minRating && m.vote_average > chosenCat.minRating) match = true;
             else if (chosenCat.director) {
-              // fetch details and check director
               let det;
               try {
                 det = await fetchMovieDetails(m.id);
-              } catch (err) {
-                throw new Error(err.message || "TMDb/network error while loading details.");
-              }
+              } catch (err) { continue; }
               if (
-                det.credits &&
-                det.credits.crew &&
-                det.credits.crew.find(
-                  c =>
-                    c.job === "Director" &&
-                    c.name.toLowerCase() === chosenCat.director.toLowerCase()
+                det.credits && det.credits.crew 
+                && det.credits.crew.some(
+                  c => c.job === "Director" && c.name.toLowerCase() === chosenCat.director.toLowerCase()
                 )
-              )
-                match = true;
-            } else if (chosenCat.isAwardWinner) {
-              // TMDb API doesn't provide this directly; mock using high vote_average
+              ) match = true;
+            }
+            else if (chosenCat.isAwardWinner) {
+              // No TMDb for this, so mock: high vote_average & count
               if (m.vote_count > 150 && m.vote_average > 7.2) match = true;
             }
-            if (match) found.push({ id: m.id, title: m.title });
+            if (match) correctOptions.push(m);
+            if (correctOptions.length >= 1) break;
           }
         }
-        if (found.length === 0)
-          throw new Error("No valid Kollywood movies fit Bingo category. API quota or data issue.");
-        found = shuffle(found.slice(0, 9));
-        setMovies(found);
+        if (correctOptions.length === 0) throw new Error("No valid movie found for Bingo category. Quota/data issue.");
+        correctMovie = correctOptions[0];
+        // --- 2. Find additional movies (distractors): similar popularity but NOT actually matching this category
+        // Let's try to ensure grid is challenging (all Tamil, all different) but only 1 that fits the clue.
+        found = [correctMovie];
+        page = 1;
+        let skipIds = new Set([correctMovie.id]);
+        while (found.length < 9 && page < 10) {
+          const d = await fetchPopularKollywoodMovies(page++);
+          if (!d || !Array.isArray(d.results)) throw new Error("TMDb/network error while loading grid movies.");
+          for (const m of d.results) {
+            if (found.length >= 9) break;
+            if (!m.id || skipIds.has(m.id)) continue;
+            // Filter: do NOT add movies that match the category!
+            let match = false;
+            if (chosenCat.genreId && m.genre_ids.includes(chosenCat.genreId)) match = true;
+            else if (chosenCat.yearFrom && m.release_date && parseInt(m.release_date.slice(0, 4), 10) >= chosenCat.yearFrom) match = true;
+            else if (chosenCat.minVotes && m.vote_count > chosenCat.minVotes) match = true;
+            else if (chosenCat.minRating && m.vote_average > chosenCat.minRating) match = true;
+            else if (chosenCat.director) {
+              let det;
+              try {
+                det = await fetchMovieDetails(m.id);
+              } catch (err) { continue; }
+              if (
+                det.credits && det.credits.crew 
+                && det.credits.crew.some(
+                  c => c.job === "Director" && c.name.toLowerCase() === chosenCat.director.toLowerCase()
+                )
+              ) match = true;
+            }
+            else if (chosenCat.isAwardWinner) {
+              if (m.vote_count > 150 && m.vote_average > 7.2) match = true;
+            }
+            if (match) continue; // Only one correct in grid!
+            found.push(m);
+            skipIds.add(m.id);
+            if (found.length >= 9) break;
+          }
+        }
+        if (found.length < 9) throw new Error("Not enough grid movies for Bingo category. Try again!");
+        found = shuffle(found);
+        // Ensure correct still in grid
+        let correctIdxFinal = found.findIndex(m => m.id === correctMovie.id);
+        if (correctIdxFinal === -1) {
+          // In an edge case, forcibly replace first cell
+          found[0] = correctMovie;
+          correctIdxFinal = 0;
+        }
+        setMovies(found.map(m => ({ id: m.id, title: m.title })));
+        setCorrectIdx(correctIdxFinal);
         setStatus("ready");
       } catch (e) {
-        setError((e && e.message ? e.message : "") || "Failed to load movie data for Bingo grid.");
+        setError(typeof e === "string" ? e : (e && e.message) || "Failed to load movie data for Bingo grid.");
         setStatus("error");
       }
     }
     loadGrid();
     return () => (ignore = true);
+    // eslint-disable-next-line
   }, []);
 
-  function toggle(idx) {
+  // PUBLIC_INTERFACE
+  function selectCell(idx) {
     if (status !== "ready") return;
-    setSelected(prev => ({ ...prev, [idx]: !prev[idx] }));
+    if (gridDisabled) return;
+    if (selectedIdx !== null) return; // Already selected one
+    setGridDisabled(true);
+
+    // Defensive: ensure idx in [0,8] and one remains correct
+    if (idx == null || idx < 0 || idx >= movies.length) {
+      // Robust handling: If an invalid grid cell is selected, ignore.
+      setGridDisabled(false);
+      return;
+    }
+
+    setSelectedIdx(idx);
+
+    const isWin = idx === correctIdx;
+    setIsCorrect(isWin);
+    setStatus("locked");
+
+    // Give immediate feedback and send result
+    setTimeout(() => {
+      onResult && onResult(isWin, category, movies, { selected: idx, correct: correctIdx });
+    }, 200); // Brief delay for color feedback if needed visually
   }
 
-  function handleSubmit() {
-    setStatus("submitted");
-    // 'Correct' if user marks any movie that fits category (here, all do)
-    onResult && onResult(Object.keys(selected).filter(k => selected[k]).length, category, movies, selected);
-  }
+  // PUBLIC_INTERFACE
   function handleReveal() {
     setStatus("revealed");
-    onResult && onResult(movies.length, category, movies, null, true);
+    setGridDisabled(true);
+    setTimeout(() => {
+      onResult && onResult(true, category, movies, { selected: selectedIdx, correct: correctIdx }, true);
+    }, 50);
   }
 
+  // PUBLIC_INTERFACE
+  function resetGrid() {
+    // For replay. Not used in 1-round game but useful for test hooks.
+    setSelectedIdx(null);
+    setIsCorrect(null);
+    setStatus("ready");
+    setGridDisabled(false);
+  }
+
+  // --- UI ---
   if (status === "loading")
     return <div style={{ minHeight: 150 }}>Loading Movie Bingo grid...</div>;
   if (status === "error")
@@ -145,50 +226,123 @@ function MovieBingo({ onResult }) {
         margin: "18px 0",
         minHeight: 180
       }}>
-        {movies.map((m, idx) => (
-          <div
-            key={idx}
-            onClick={() => toggle(idx)}
-            style={{
-              padding: "18px 4px",
-              background: selected[idx]
-                ? "var(--base-light)"
-                : "rgba(255,255,255,0.07)",
-              color: selected[idx] ? "#000" : "#fff",
-              fontWeight: 600,
-              cursor: status === "ready" ? "pointer" : "default",
-              borderRadius: 7,
-              border: selected[idx]
-                ? "2px solid gold"
-                : "1.5px solid var(--border-color)",
-              boxShadow: selected[idx] ? "0 2px 8px #f7c43e55" : "",
-              fontSize: 16,
-              transition: "all 0.2s"
-            }}
-          >
-            {m.title}
-          </div>
-        ))}
+        {movies.map((m, idx) => {
+          // Cell coloring: Feedback after selection ("locked") or reveal
+          let bg = "rgba(255,255,255,0.07)",
+              color = "#fff",
+              border = "1.5px solid var(--border-color)", 
+              cursor = status === "ready" && !gridDisabled && selectedIdx === null ? "pointer" : "default",
+              boxShadow = "";
+
+          if (status === "locked" || status === "revealed") {
+            if (selectedIdx === idx) {
+              if (idx === correctIdx) {
+                bg = "#32f095"; // green
+                color = "#171e10";
+                border = "2.5px solid #82ff54";
+                boxShadow = "0 2px 10px #19fc626c";
+              } else {
+                bg = "#ec184c"; // red
+                color = "#fff";
+                border = "2.5px solid #ee25a4";
+                boxShadow = "0 2px 8px #ee256066";
+              }
+            } else if (status === "revealed" && idx === correctIdx) {
+              bg = "#32f095";
+              color = "#171f11";
+              border = "2.5px solid #82ff54";
+              boxShadow = "0 2px 10px #19fc626c";
+            }
+          } else if (selectedIdx === idx) {
+            // Lights up while clicking, before having determined right/wrong
+            bg = "var(--base-light)";
+            color = "#171f20";
+            border = "2px solid #ddd";
+            boxShadow = "0 2px 8px #41eee9aa";
+          }
+
+          // If grid is disabled, or user already chose one, block all clicks
+          let disabled = gridDisabled || (selectedIdx !== null && selectedIdx !== idx);
+
+          return (
+            <div
+              key={idx}
+              tabIndex={0}
+              aria-disabled={disabled}
+              onClick={() => (disabled ? undefined : selectCell(idx))}
+              style={{
+                padding: "18px 4px",
+                background: bg,
+                color: color,
+                fontWeight: 600,
+                cursor: cursor,
+                borderRadius: 7,
+                border: border,
+                boxShadow: boxShadow,
+                fontSize: 16,
+                transition: "all 0.18s",
+                outline: selectedIdx === idx ? "2px solid #ffe791" : "none",
+                pointerEvents: disabled ? "none" : "auto",
+                position: "relative",
+                userSelect: "none",
+                minHeight: 35
+              }}
+              title={disabled && selectedIdx !== null ? "You may only select one answer for this question." : m.title}
+              data-testid={"bingo-cell-" + idx}
+            >
+              {m.title}
+              {(status === "locked" || status === "revealed") && idx === correctIdx && (
+                <span style={{
+                  position: "absolute",
+                  right: 7,
+                  top: 7,
+                  fontSize: 17,
+                  fontWeight: 900,
+                  color: "#5be85e"
+                }}>✔</span>
+              )}
+              {(status === "locked" || status === "revealed") && selectedIdx === idx && idx !== correctIdx && (
+                <span style={{
+                  position: "absolute",
+                  right: 7,
+                  top: 7,
+                  fontSize: 17,
+                  fontWeight: 900,
+                  color: "#ea2525"
+                }}>✗</span>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div>
         {status === "ready" && (
-          <>
-            <button className="btn btn-large" onClick={handleSubmit}>
-              Submit
-            </button>{" "}
-            <button className="btn" onClick={handleReveal}>Reveal All</button>
-          </>
+          <div style={{ color: "#eee", fontSize: 15, marginTop: 10 }}>
+            Select <b>one</b> movie you think fits the category above.
+          </div>
         )}
-        {status === "submitted" && (
-          <div style={{ marginTop: 18, color: "#5cfcad" }}>
-            You marked <b>{Object.keys(selected).filter(i => selected[i]).length}</b> movies!
+        {status === "locked" && (
+          <div style={{
+            color: isCorrect ? "#32f095" : "#fd3c77",
+            fontWeight: 600,
+            marginTop: 14,
+            fontSize: 17
+          }}>
+            {isCorrect ? "🎉 Correct! The chosen movie fits the category." : "Oops! That's not correct for this category."}
             <br />
             <button className="btn" style={{ marginTop: 10 }} onClick={handleReveal}>Reveal Correct</button>
           </div>
         )}
         {status === "revealed" && (
-          <div style={{ marginTop: 18, color: "#eedd2d" }}>
-            All movies in grid fit this bingo! Grid movies are <b>all valid answers</b>.
+          <div style={{
+            marginTop: 18,
+            background: "#191947",
+            borderRadius: 8,
+            padding: "10px 15px",
+            color: "#eedd2d",
+            fontSize: 16
+          }}>
+            The correct answer is highlighted in <span style={{ color: "#60fb87", fontWeight: 600 }}>green</span>.
           </div>
         )}
       </div>

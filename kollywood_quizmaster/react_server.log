@@ -12,8 +12,8 @@ asset index.html 1.92 KiB [emitted]
 runtime modules 27.5 KiB 14 modules
 cacheable modules 1.34 MiB
   modules by path ./node_modules/ 1.24 MiB 31 modules
-  modules by path ./src/ 89.6 KiB
-    modules by path ./src/*.js 82.1 KiB 9 modules
+  modules by path ./src/ 90.4 KiB
+    modules by path ./src/*.js 82.9 KiB 9 modules
     modules by path ./src/*.css 7.49 KiB
       ./src/index.css 2.23 KiB [built] [code generated]
       + 3 modules
@@ -23,24 +23,14 @@ cacheable modules 1.34 MiB
       ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
       ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
     ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1745 ms
+webpack 5.99.9 compiled successfully in 1743 ms
 assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.51 MiB
-  asset bundle.js 1.49 MiB [emitted] (name: main)
-  asset main.2f838854f7a8c1e7b6d6.hot-update.js 22 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.2f838854f7a8c1e7b6d6.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.51 MiB = bundle.js 1.49 MiB main.2f838854f7a8c1e7b6d6.hot-update.js 22 KiB
+assets by path *.js 1.52 MiB
+  asset bundle.js 1.5 MiB [emitted] (name: main)
+  asset main.eca70040800ff8af9270.hot-update.js 18.3 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.eca70040800ff8af9270.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.52 MiB = bundle.js 1.5 MiB main.eca70040800ff8af9270.hot-update.js 18.3 KiB
 cached modules 1.33 MiB [cached] 48 modules
 runtime modules 27.5 KiB 14 modules
-./src/CharacterMovieMatch.js 17.5 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 245 ms
-assets by status 1.92 KiB [cached] 1 asset
-assets by path *.js 1.51 MiB
-  asset bundle.js 1.49 MiB [emitted] (name: main)
-  asset main.82aef50b15717260f2fc.hot-update.js 22.1 KiB [emitted] [immutable] [hmr] (name: main)
-asset main.82aef50b15717260f2fc.hot-update.json 28 bytes [emitted] [immutable] [hmr]
-Entrypoint main 1.51 MiB = bundle.js 1.49 MiB main.82aef50b15717260f2fc.hot-update.js 22.1 KiB
-cached modules 1.33 MiB [cached] 48 modules
-runtime modules 27.5 KiB 14 modules
-./src/CharacterMovieMatch.js 17.6 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 117 ms
+./src/MovieBingo.js 14.5 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 200 ms
