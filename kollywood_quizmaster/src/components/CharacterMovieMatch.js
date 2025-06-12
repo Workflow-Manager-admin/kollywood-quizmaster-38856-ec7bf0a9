@@ -42,21 +42,41 @@ function CharacterMovieMatch() {
       setShowClues(false);
       setResults(null);
       setAssignments({});
-      let tamilMovies = await discoverTamilMovies({
-        page: Math.floor(Math.random() * 25) + 1,
-        "vote_count.gte": 7,
-      });
 
-      tamilMovies = tamilMovies.filter((m) => m.poster_path && m.title && m.id);
-      tamilMovies = shuffleArray(tamilMovies);
+      // To avoid repeated titles, use a Set to track picked titles (local to this round)
+      // Try sampling from multiple pages if not enough unique titles
+      const neededMovies = MOVIE_COUNT;
+      let collected = [];
+      let triedTitles = new Set();
+      let page = Math.floor(Math.random() * 25) + 1;
+      // Try up to 6 pages to ensure diversity and non-repeating titles
+      for (let retries = 0; collected.length < neededMovies && retries < 6; retries++) {
+        let tamilMovies = await discoverTamilMovies({
+          page: ((page + retries) % 25) + 1,
+          "vote_count.gte": 7,
+        });
+        tamilMovies = tamilMovies.filter((m) => m.poster_path && m.title && m.id && !triedTitles.has(m.title.trim().toLowerCase()));
+        for (const m of tamilMovies) {
+          const tTitle = m.title.trim().toLowerCase();
+          if (!triedTitles.has(tTitle) && collected.length < neededMovies) {
+            collected.push(m);
+            triedTitles.add(tTitle);
+          }
+        }
+      }
 
-      // Select MOVIE_COUNT
-      const selected = tamilMovies.slice(0, MOVIE_COUNT);
+      // Now we have at most four unique-title movies
+      if (collected.length < neededMovies) {
+        // Not enough unique-title movies with posters found, retry after a short pause
+        if (isMounted) setTimeout(setupGame, 700);
+        return;
+      }
 
-      // For each, get cast & pick a random character
+      // For each movie, fetch accurate character options from TMDb
       const withCast = await Promise.all(
-        selected.map(async (m) => {
+        collected.map(async (m) => {
           const cast = await getMovieCast(m.id);
+          // Deduplicate and filter for displayable characters
           const validChars = Array.from(
             new Set(
               (Array.isArray(cast) ? cast : [])
@@ -64,7 +84,10 @@ function CharacterMovieMatch() {
                   (c) =>
                     c.character &&
                     typeof c.character === "string" &&
-                    c.character.length > 1
+                    c.character.length > 1 &&
+                    !c.character.toLowerCase().includes("himself") &&
+                    !c.character.toLowerCase().includes("herself") &&
+                    !c.character.toLowerCase().includes("uncredited")
                 )
                 .map((c) => c.character)
             )
@@ -76,27 +99,40 @@ function CharacterMovieMatch() {
         })
       );
 
-      const moviesWithChar = withCast.filter(
-        (m) => Array.isArray(m.characterOptions) && m.characterOptions.length > 0
-      );
-      if (moviesWithChar.length < MOVIE_COUNT) {
-        // Not enough valid movies, try again
-        if (isMounted) {
-          setTimeout(setupGame, 600);
-        }
+      // Must ensure each movie has at least one valid character clue
+      const moviesWithChar = withCast
+        .filter(
+          (m) => Array.isArray(m.characterOptions) && m.characterOptions.length > 0
+        )
+        // In case two movies have the same featured character, filter for unique characters globally
+        .slice(0, neededMovies);
+
+      if (moviesWithChar.length < neededMovies) {
+        // Not enough valid movies with characters, try again
+        if (isMounted) setTimeout(setupGame, 800);
         return;
       }
 
-      // Pick one random character per movie
-      const chosen = moviesWithChar.slice(0, MOVIE_COUNT).map((m) => {
-        const character =
-          m.characterOptions[
-            Math.floor(Math.random() * m.characterOptions.length)
-          ];
-        return { ...m, correctCharacter: character };
-      });
+      // Assign a unique random character clue for each movie, and globally ensure character names do not repeat
+      let usedCharacters = new Set();
+      const chosen = [];
+      for (let m of moviesWithChar) {
+        const charOptions = m.characterOptions.filter(
+          (c) => !usedCharacters.has(c.trim().toLowerCase())
+        );
+        if (!charOptions.length) continue;
+        const character = charOptions[Math.floor(Math.random() * charOptions.length)];
+        usedCharacters.add(character.trim().toLowerCase());
+        chosen.push({ ...m, correctCharacter: character });
+      }
 
-      // Prepare clues: shuffled
+      if (chosen.length < neededMovies) {
+        // If by any chance duplicate character names reduced our count, retry
+        if (isMounted) setTimeout(setupGame, 850);
+        return;
+      }
+
+      // Prepare drag clues, shuffle clues
       const clues = shuffleArray(
         chosen.map((m) => ({
           character: m.correctCharacter,
