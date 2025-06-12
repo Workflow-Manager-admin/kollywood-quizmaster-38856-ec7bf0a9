@@ -22,4 +22,679 @@ modules by path ./.ve/ 15.1 KiB
     ./.ve/EditorOverlay.css 2.25 KiB [built] [code generated]
     ./node_modules/css-loader/dist/cjs.js!./.ve/EditorOverlay.css 697 bytes [built] [code generated]
   ./.ve/EditorOverlay.jsx 1.58 KiB [built] [code generated]
-webpack 5.99.9 compiled successfully in 1469 ms
+webpack 5.99.9 compiled successfully in 1396 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.4 MiB
+  asset bundle.js 1.39 MiB [emitted] (name: main)
+  asset main.c13ad196c8e191e79fa6.hot-update.js 7.91 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.c13ad196c8e191e79fa6.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.4 MiB = bundle.js 1.39 MiB main.c13ad196c8e191e79fa6.hot-update.js 7.91 KiB
+cached modules 1.26 MiB [cached] 41 modules
+runtime modules 27.5 KiB 14 modules
+./node_modules/css-loader/dist/cjs.js!./src/App.css 5.31 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 104 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.43 MiB
+  asset bundle.js 1.41 MiB [emitted] (name: main)
+  asset main.78db731448f7113122e3.hot-update.js 20.7 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.78db731448f7113122e3.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.43 MiB = bundle.js 1.41 MiB main.78db731448f7113122e3.hot-update.js 20.7 KiB
+cached modules 1.26 MiB [cached] 40 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 11.1 KiB
+  ./src/index.js 530 bytes [code generated]
+  ./src/App.js 6.54 KiB [built] [code generated]
+  ./src/tmdb.js 4.02 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 5:0-47
+Module not found: Error: Can't resolve './components/LoginPage' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 6:0-47
+Module not found: Error: Can't resolve './components/Dashboard' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 7:0-63
+Module not found: Error: Can't resolve './components/BlurredPosterQuiz' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 8:0-67
+Module not found: Error: Can't resolve './components/CharacterMovieMatch' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 9:0-49
+Module not found: Error: Can't resolve './components/MovieBingo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+10 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 10 errors in 120 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.43 MiB
+  asset bundle.js 1.41 MiB [emitted] (name: main)
+  asset main.3018c4a2b43682a3c5f9.hot-update.js 19.7 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.3018c4a2b43682a3c5f9.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.43 MiB = bundle.js 1.41 MiB main.3018c4a2b43682a3c5f9.hot-update.js 19.7 KiB
+cached modules 1.27 MiB [cached] 42 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 8.99 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/LoginPage.js 2.45 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 6:0-47
+Module not found: Error: Can't resolve './components/Dashboard' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 7:0-63
+Module not found: Error: Can't resolve './components/BlurredPosterQuiz' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 8:0-67
+Module not found: Error: Can't resolve './components/CharacterMovieMatch' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 9:0-49
+Module not found: Error: Can't resolve './components/MovieBingo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 74 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.44 MiB
+  asset bundle.js 1.42 MiB [emitted] (name: main)
+  asset main.90b027012cae00cf8764.hot-update.js 20.3 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.90b027012cae00cf8764.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.44 MiB = bundle.js 1.42 MiB main.90b027012cae00cf8764.hot-update.js 20.3 KiB
+cached modules 1.27 MiB [cached] 43 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 9.45 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/Dashboard.js 2.92 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 7:0-63
+Module not found: Error: Can't resolve './components/BlurredPosterQuiz' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 8:0-67
+Module not found: Error: Can't resolve './components/CharacterMovieMatch' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 9:0-49
+Module not found: Error: Can't resolve './components/MovieBingo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 53 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.46 MiB
+  asset bundle.js 1.43 MiB [emitted] (name: main)
+  asset main.f15b462eaf3bd71c7a3a.hot-update.js 28.1 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.f15b462eaf3bd71c7a3a.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.46 MiB = bundle.js 1.43 MiB main.f15b462eaf3bd71c7a3a.hot-update.js 28.1 KiB
+cached modules 1.27 MiB [cached] 44 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 14.6 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/BlurredPosterQuiz.js 7.14 KiB [built] [code generated]
+  ./src/components/QuizProgressBar.js 988 bytes [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 8:0-67
+Module not found: Error: Can't resolve './components/CharacterMovieMatch' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 9:0-49
+Module not found: Error: Can't resolve './components/MovieBingo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 103 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.47 MiB
+  asset bundle.js 1.44 MiB [emitted] (name: main)
+  asset main.eacc6ad37e32e58b688b.hot-update.js 26.4 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.eacc6ad37e32e58b688b.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.47 MiB = bundle.js 1.44 MiB main.eacc6ad37e32e58b688b.hot-update.js 26.4 KiB
+cached modules 1.28 MiB [cached] 46 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 14.4 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/CharacterMovieMatch.js 7.86 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 9:0-49
+Module not found: Error: Can't resolve './components/MovieBingo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 103 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.47 MiB
+  asset bundle.js 1.45 MiB [emitted] (name: main)
+  asset main.b06d5126ce286ec846d6.hot-update.js 22.1 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.b06d5126ce286ec846d6.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.47 MiB = bundle.js 1.45 MiB main.b06d5126ce286ec846d6.hot-update.js 22.1 KiB
+cached modules 1.29 MiB [cached] 47 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 10.7 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/MovieBingo.js 4.2 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 10:0-73
+Module not found: Error: Can't resolve './components/MovieTimelineChallenge' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 73 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.48 MiB
+  asset bundle.js 1.46 MiB [emitted] (name: main)
+  asset main.2da0b0f8838300eba116.hot-update.js 25.4 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.2da0b0f8838300eba116.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.48 MiB = bundle.js 1.46 MiB main.2da0b0f8838300eba116.hot-update.js 25.4 KiB
+cached modules 1.29 MiB [cached] 48 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 13.5 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/MovieTimelineChallenge.js 6.96 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 11:0-53
+Module not found: Error: Can't resolve './components/SpinTheWheel' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieTimelineChallenge.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 10:0-73 134:46-68
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 81 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.49 MiB
+  asset bundle.js 1.47 MiB [emitted] (name: main)
+  asset main.67d32ee88ab63a3746e5.hot-update.js 24.3 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.67d32ee88ab63a3746e5.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.49 MiB = bundle.js 1.47 MiB main.67d32ee88ab63a3746e5.hot-update.js 24.3 KiB
+cached modules 1.3 MiB [cached] 49 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 12.6 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/SpinTheWheel.js 6.02 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 12:0-47
+Module not found: Error: Can't resolve './components/CastCombo' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieTimelineChallenge.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 10:0-73 134:46-68
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/SpinTheWheel.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 11:0-53 143:46-58
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 90 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.5 MiB
+  asset bundle.js 1.48 MiB [emitted] (name: main)
+  asset main.35ed4cda84ad7c8a338e.hot-update.js 25.7 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.35ed4cda84ad7c8a338e.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.5 MiB = bundle.js 1.48 MiB main.35ed4cda84ad7c8a338e.hot-update.js 25.7 KiB
+cached modules 1.31 MiB [cached] 50 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 13.8 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/CastCombo.js 7.3 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/App.js 13:0-51
+Module not found: Error: Can't resolve './components/GameSummary' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CastCombo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 12:0-47 152:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieTimelineChallenge.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 10:0-73 134:46-68
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/SpinTheWheel.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 11:0-53 143:46-58
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 89 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 1.5 MiB
+  asset bundle.js 1.48 MiB [emitted] (name: main)
+  asset main.b9a692e71365bb6f57d2.hot-update.js 19.9 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.b9a692e71365bb6f57d2.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.5 MiB = bundle.js 1.48 MiB main.b9a692e71365bb6f57d2.hot-update.js 19.9 KiB
+cached modules 1.31 MiB [cached] 51 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 9.23 KiB
+  ./src/App.js 6.54 KiB [code generated]
+  ./src/components/GameSummary.js 2.69 KiB [built] [code generated]
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CastCombo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 12:0-47 152:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/GameSummary.js 2:0-71
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 13:0-51 161:46-57
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieTimelineChallenge.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 10:0-73 134:46-68
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/SpinTheWheel.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 11:0-53 143:46-58
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 57 ms
+assets by status 1.48 MiB [cached] 2 assets
+cached modules 1.32 MiB (javascript) 27.5 KiB (runtime) [cached] 67 modules
+
+LOG from webpack.FileSystemInfo
+<w> Managed item /home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/node_modules/react-router-dom isn't a directory or doesn't contain a package.json (see snapshot.managedPaths option)
++ 13 hidden lines
+
+ERROR in ./src/App.js 2:0-97
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src'
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/BlurredPosterQuiz.js 4:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 7:0-63 107:46-63
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CastCombo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 12:0-47 152:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/CharacterMovieMatch.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 8:0-67 116:46-65
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/Dashboard.js 2:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 6:0-47 98:46-55
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/GameSummary.js 2:0-71
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 13:0-51 161:46-57
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieBingo.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 9:0-49 125:46-56
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/MovieTimelineChallenge.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 10:0-73 134:46-68
+ @ ./src/index.js 5:0-24 11:32-35
+
+ERROR in ./src/components/SpinTheWheel.js 3:0-47
+Module not found: Error: Can't resolve 'react-router-dom' in '/home/kavia/workspace/code-generation/kollywood-quizmaster-38856-ec7bf0a9/kollywood_quizmaster/src/components'
+ @ ./src/App.js 11:0-53 143:46-58
+ @ ./src/index.js 5:0-24 11:32-35
+
+9 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.99.9 compiled with 9 errors in 33 ms
+assets by status 1.92 KiB [cached] 1 asset
+assets by path *.js 2.36 MiB
+  asset bundle.js 1.88 MiB [emitted] (name: main)
+  asset main.9157cf613753c9770f82.hot-update.js 491 KiB [emitted] [immutable] [hmr] (name: main)
+asset main.9157cf613753c9770f82.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 2.36 MiB = bundle.js 1.88 MiB main.9157cf613753c9770f82.hot-update.js 491 KiB
+cached modules 1.27 MiB [cached] 44 modules
+runtime modules 27.5 KiB 14 modules
+orphan modules 12.8 KiB [orphan] 3 modules
+javascript modules 431 KiB
+  modules by path ./src/ 51.6 KiB
+    ./src/App.js 6.54 KiB [code generated]
+    ./src/components/Dashboard.js 2.92 KiB [code generated]
+    ./src/components/BlurredPosterQuiz.js 7.14 KiB [code generated]
+    ./src/components/CharacterMovieMatch.js 7.86 KiB [code generated]
+    ./src/components/MovieBingo.js 4.2 KiB [code generated]
+    + 4 modules
+  built modules 379 KiB [built]
+    ./node_modules/react-router/dist/development/chunk-NL6KNZEE.mjs 365 KiB [built] [code generated]
+    ./node_modules/react-router/node_modules/cookie/dist/index.js 8.14 KiB [built] [code generated]
+    ./node_modules/set-cookie-parser/lib/set-cookie.js 6.47 KiB [built] [code generated]
+webpack 5.99.9 compiled successfully in 311 ms
+assets by status 1.88 MiB [cached] 2 assets
+cached modules 1.71 MiB (javascript) 27.5 KiB (runtime) [cached] 73 modules
+webpack 5.99.9 compiled successfully in 28 ms
+Injecting EditorRootWrapper import: ../.ve/EditorRootWrapper
+assets by path *.js 1.88 MiB
+  asset bundle.js 1.88 MiB [emitted] (name: main)
+  asset main.70116cbc098a2c54be45.hot-update.js 854 bytes [emitted] [immutable] [hmr] (name: main)
+asset index.html 1.92 KiB [emitted]
+asset main.70116cbc098a2c54be45.hot-update.json 28 bytes [emitted] [immutable] [hmr]
+Entrypoint main 1.88 MiB = bundle.js 1.88 MiB main.70116cbc098a2c54be45.hot-update.js 854 bytes
+cached modules 1.64 MiB [cached] 43 modules
+runtime modules 27.5 KiB 14 modules
+javascript modules 71.8 KiB
+  modules by path ./src/ 59.6 KiB
+    modules by path ./src/components/*.js 48.5 KiB
+      ./src/components/LoginPage.js 2.45 KiB [built]
+      + 9 modules
+    modules by path ./src/*.js 11.1 KiB
+      ./src/index.js 530 bytes [built]
+      ./src/App.js 6.54 KiB [built]
+      ./src/tmdb.js 4.02 KiB [built]
+  modules by path ./.ve/ 12.2 KiB
+    ./.ve/EditorRootWrapper.js 2.68 KiB [built]
+    ./.ve/EditorOverlay.jsx 1.58 KiB [built]
+    ./.ve/SidePanel.js 7.93 KiB [built]
+webpack 5.99.9 compiled successfully in 341 ms
