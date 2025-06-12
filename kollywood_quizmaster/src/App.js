@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import BlurredPosterQuiz from "./BlurredPosterQuiz";
 import CharacterMovieMatch from "./CharacterMovieMatch";
@@ -228,6 +228,14 @@ function GameRunner({ user, gameKey, onBackToDashboard }) {
   const [results, setResults] = useState([]);
   const [showSummary, setShowSummary] = useState(false);
 
+  // Track unique MovieBingo categories for this session if/when that game is played
+  const [bingoCategories, setBingoCategories] = useState(null);
+
+  // Reset categories list on new game or full reset
+  useEffect(() => {
+    setBingoCategories(null);
+  }, [gameKey]);
+
   function handleResult(...args) {
     setResults(arr => [...arr, args]);
     setTimeout(() => {
@@ -240,12 +248,11 @@ function GameRunner({ user, gameKey, onBackToDashboard }) {
     setStep(0);
     setResults([]);
     setShowSummary(false);
+    setBingoCategories(null); // reset the bingo session pool too!
   }
 
   if (showSummary) {
-    // results: array of [correct/score, ...]
     const correctCount = results.filter(r => r[0] === true || r[0] === 1).length;
-    // for some games, r[0] == (score, ...) so use truthy
     return (
       <div className="container" style={{ paddingTop: 80 }}>
         <div style={{
@@ -276,6 +283,33 @@ function GameRunner({ user, gameKey, onBackToDashboard }) {
     );
   }
 
+  // set up props for MovieBingo for unique session category pool
+  const quizProps =
+    gameKey === "movie-bingo"
+      ? {
+        availableCategories:
+          bingoCategories ??
+          (setBingoCategories &&
+            (() => {
+              const all = [
+                { label: "A Comedy", genreId: 35 },
+                { label: "A Blockbuster", minVotes: 500 },
+                { label: "Released After 2015", yearFrom: 2015 },
+                { label: "National Award Winner", isAwardWinner: true },
+                { label: "Family Film", genreId: 10751 },
+                { label: "High User Rating", minRating: 7.5 },
+                { label: "Action Movie", genreId: 28 },
+                { label: "By a Famous Director", director: "Mani Ratnam" },
+                { label: "Romantic", genreId: 10749 },
+              ];
+              setBingoCategories(all.sort(() => Math.random() - 0.5));
+              return all;
+            })()),
+        setAvailableCategories: setBingoCategories,
+        onResult: handleResult,
+      }
+      : { onResult: handleResult };
+
   return (
     <div className="container" style={{ paddingTop: 80 }}>
       <div>
@@ -286,9 +320,15 @@ function GameRunner({ user, gameKey, onBackToDashboard }) {
           ← Back to Dashboard
         </button>
       </div>
-      <div className="title" style={{ fontSize: 26, fontWeight: 600, color: "#f604c2", marginBottom: 4, marginTop: -10 }}>{gameMeta.icon} {gameMeta.name}</div>
+      <div className="title" style={{ fontSize: 26, fontWeight: 600, color: "#f604c2", marginBottom: 4, marginTop: -10 }}>
+        {gameMeta.icon} {gameMeta.name}
+      </div>
       <ProgressBar current={step + 1} total={10} />
-      <QuizComponent key={step} onResult={handleResult} />
+      {gameKey === "movie-bingo" ? (
+        <MovieBingo key={step} {...quizProps} />
+      ) : (
+        <QuizComponent key={step} onResult={handleResult} />
+      )}
       <div style={{ textAlign: "center", marginTop: 28, color: "#9ac7fc", fontSize: 13 }}>
         Question {step + 1} out of 10
       </div>

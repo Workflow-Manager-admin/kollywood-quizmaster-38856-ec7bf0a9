@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { fetchPopularKollywoodMovies, fetchMovieDetails } from "./tmdbApi";
 
 /*
- * Refactored for per-session unique bingo categories:
- * Each round/question now draws a unique, non-repeating category from a tracked session pool.
- * Categories already used in the session are removed from the list, guaranteeing uniqueness.
- * The pool is reshuffled when exhausted, but within a single 10-question game, no repeats occur.
+ * MovieBingo with per-session unique bingo categories:
+ * - Tracks a pool of unused categories in React state for the lifetime of the session.
+ * - Each round draws a unique, non-repeating category from this pool.
+ * - Used categories are removed from the pool.
+ * - Once exhausted, (very rare in 10-round games) the pool is reset/shuffled, but within each game, categories do NOT repeat.
  */
 
 const bingoCategoriesMaster = [
@@ -32,26 +33,24 @@ function shuffle(arr) {
   return result;
 }
 
-function MovieBingo({ onResult }) {
+function MovieBingo({ onResult, availableCategories, setAvailableCategories }) {
   /**
    * Movie Bingo: 3x3 grid where only one matches the challenge category.
-   * Each question uses a unique category, managed by a pool that shrinks each round.
+   * Each question uses a unique category, with the available pool managed at session level.
    */
   const [movies, setMovies] = useState([]); // [{id, title}]
   const [category, setCategory] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | locked | revealed | error
   const [error, setError] = useState("");
-  const [correctIdx, setCorrectIdx] = useState(null); // index (0-8) of the one correct cell for the category
+  const [correctIdx, setCorrectIdx] = useState(null);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isCorrect, setIsCorrect] = useState(null);
   const [gridDisabled, setGridDisabled] = useState(false);
 
-  // Track unused categories per session in state.
-  const [availableCategories, setAvailableCategories] = useState(() => shuffle([...bingoCategoriesMaster]));
-
   useEffect(() => {
-    // If out of categories, re-init pool (rare for 10Q sessions)
-    if (availableCategories.length === 0) {
+    // Defensive: never mutate prop arrays
+    if (!availableCategories || availableCategories.length === 0) {
+      // If no available categories, reinit pool (necessary if 10+ rounds, rare)
       setAvailableCategories(shuffle([...bingoCategoriesMaster]));
       return;
     }
@@ -71,9 +70,9 @@ function MovieBingo({ onResult }) {
       setCorrectIdx(null);
 
       // Remove the chosen category from available categories (avoid repeats).
-      setAvailableCategories((prev) => prev.filter((x, i) => i !== rndIdx));
+      setAvailableCategories(prev => prev.filter((x, i) => i !== rndIdx));
 
-      // ===== GRID LOADING CODE as LOGICALLY BEFORE =====
+      // ===== GRID LOADING CODE remains unchanged =====
       let found = [];
       let correctMovie = null;
       let page = 1;
@@ -166,9 +165,8 @@ function MovieBingo({ onResult }) {
     }
     loadGrid();
     return () => { ignore = true; };
-    // eslint-disable-next-line
-  // Only run when availableCategories changes (i.e., new question/round)
-  }, [availableCategories]);
+    // Only run on availableCategories prop change (i.e., new round)
+  }, [availableCategories, setAvailableCategories]);
 
   // PUBLIC_INTERFACE
   function selectCell(idx) {
