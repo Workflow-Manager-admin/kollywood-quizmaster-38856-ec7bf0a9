@@ -7,103 +7,168 @@ import QuizProgressBar from "./QuizProgressBar";
  * Game: Character-Movie Match
  * Show 4 Tamil movie posters with drag-and-drop character name clues.
  * Users drag character names to match the correct movie poster.
+ * Character clues appear at the top, movie poster grid at the bottom for clean separation.
  */
 // PUBLIC_INTERFACE
 function CharacterMovieMatch() {
   const MOVIE_COUNT = 4;
   const [movies, setMovies] = useState([]);
-  const [characterClues, setCharacterClues] = useState([]);
-  const [assignments, setAssignments] = useState({});
-  const [draggedCharacter, setDraggedCharacter] = useState(null);
+  const [characterClues, setCharacterClues] = useState([]); // {character, movieId}
+  const [assignments, setAssignments] = useState({}); // movieId: character
+  const [draggedClue, setDraggedClue] = useState(null); // character name
   const [loading, setLoading] = useState(true);
   const [showClues, setShowClues] = useState(false);
   const [reveal, setReveal] = useState(false);
   const [results, setResults] = useState(null);
   const navigate = useNavigate();
 
-  // Shuffle utility (Fisher-Yates)
+  // Fisher-Yates shuffle for array
   function shuffleArray(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
+    const array = [...arr];
+    for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
+      [array[i], array[j]] = [array[j], array[i]];
     }
-    return a;
+    return array;
   }
 
+  // Setup/refresh game
   useEffect(() => {
+    let isMounted = true;
+
     async function setupGame() {
       setLoading(true);
       setReveal(false);
       setShowClues(false);
       setResults(null);
-      let tamilMovies = await discoverTamilMovies({ page: Math.floor(Math.random() * 25) + 1, "vote_count.gte": 7 });
+      setAssignments({});
+      let tamilMovies = await discoverTamilMovies({
+        page: Math.floor(Math.random() * 25) + 1,
+        "vote_count.gte": 7,
+      });
 
-      // Filter for movies that have posters & title
-      tamilMovies = tamilMovies.filter(m => m.poster_path && m.title && m.id);
+      tamilMovies = tamilMovies.filter((m) => m.poster_path && m.title && m.id);
       tamilMovies = shuffleArray(tamilMovies);
 
+      // Select MOVIE_COUNT
       const selected = tamilMovies.slice(0, MOVIE_COUNT);
 
-      // For each, get cast and pick a random character (from those that have character names)
+      // For each, get cast & pick a random character
       const withCast = await Promise.all(
-        selected.map(async m => {
+        selected.map(async (m) => {
           const cast = await getMovieCast(m.id);
-          // Get characters with names & remove duplicates/empty
           const validChars = Array.from(
-            new Set(cast.filter(c => c.character && c.character.length > 1).map(c => c.character))
+            new Set(
+              (Array.isArray(cast) ? cast : [])
+                .filter(
+                  (c) =>
+                    c.character &&
+                    typeof c.character === "string" &&
+                    c.character.length > 1
+                )
+                .map((c) => c.character)
+            )
           );
           return {
             ...m,
-            characterOptions: validChars
+            characterOptions: validChars,
           };
         })
       );
-      // Only keep those with at least one character
-      const moviesWithCharacter = withCast.filter(m => m.characterOptions && m.characterOptions.length > 0);
-      if (moviesWithCharacter.length < MOVIE_COUNT) {
-        // Not enough, fallback (try again)
-        setMovies([]);
-        setCharacterClues([]);
-        setTimeout(() => setupGame(), 700);
+
+      const moviesWithChar = withCast.filter(
+        (m) => Array.isArray(m.characterOptions) && m.characterOptions.length > 0
+      );
+      if (moviesWithChar.length < MOVIE_COUNT) {
+        // Not enough valid movies, try again
+        if (isMounted) {
+          setTimeout(setupGame, 600);
+        }
         return;
       }
-      // Pick ONE random character per movie (for clues)
-      const chosen = moviesWithCharacter.slice(0, MOVIE_COUNT).map(m => {
-        const character = m.characterOptions[Math.floor(Math.random() * m.characterOptions.length)];
+
+      // Pick one random character per movie
+      const chosen = moviesWithChar.slice(0, MOVIE_COUNT).map((m) => {
+        const character =
+          m.characterOptions[
+            Math.floor(Math.random() * m.characterOptions.length)
+          ];
         return { ...m, correctCharacter: character };
       });
-      setMovies(chosen);
 
-      // Prepare clues (shuffle for replayability)
-      const clues = shuffleArray(chosen.map(m => ({
-        character: m.correctCharacter,
-        movieId: m.id
-      })));
-      setCharacterClues(clues);
-      setAssignments({});
-      setLoading(false);
+      // Prepare clues: shuffled
+      const clues = shuffleArray(
+        chosen.map((m) => ({
+          character: m.correctCharacter,
+          movieId: m.id,
+        }))
+      );
+
+      if (isMounted) {
+        setMovies(chosen);
+        setCharacterClues(clues);
+        setAssignments({});
+        setLoading(false);
+      }
     }
     setupGame();
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line
   }, []);
 
-  function onDrop(e, movieId) {
-    const character = e.dataTransfer.getData("character");
-    if (!character) return;
-    setAssignments(prev => ({
-      ...prev,
-      [movieId]: character
-    }));
-  }
-
-  function startDrag(e, character) {
-    setDraggedCharacter(character);
+  // Drag handlers for clues (top row)
+  function onDragStartClue(e, character) {
     e.dataTransfer.setData("character", character);
+    setDraggedClue(character);
+    // Custom drag avatar is optional for clarity
+  }
+  function onDragEndClue() {
+    setDraggedClue(null);
   }
 
-  function allowDrop(e) {
+  // Allow dropping on poster
+  function onDragOverPoster(e) {
     e.preventDefault();
+  }
+  function onDropPoster(e, movieId) {
+    e.preventDefault();
+    const character = (e.dataTransfer.getData && e.dataTransfer.getData("character")) || draggedClue;
+    if (!character) return;
+    // Only allow assigning unused clues
+    if (
+      characterClues.some((c) => c.character === character) &&
+      !Object.values(assignments).includes(character)
+    ) {
+      setAssignments((prev) => ({
+        ...prev,
+        [movieId]: character,
+      }));
+    }
+    setDraggedClue(null);
+  }
+
+  // For keyboard accessibility (tab+enter to assign)
+  function assignClueToPoster(character, movieId) {
+    if (
+      characterClues.some((c) => c.character === character) &&
+      !Object.values(assignments).includes(character)
+    ) {
+      setAssignments((prev) => ({
+        ...prev,
+        [movieId]: character,
+      }));
+    }
+  }
+
+  // Unassign a clue from a poster (allow re-match before submit)
+  function clearAssignment(movieId) {
+    setAssignments((prev) => {
+      const newAssign = { ...prev };
+      delete newAssign[movieId];
+      return newAssign;
+    });
   }
 
   function handleReveal() {
@@ -114,15 +179,16 @@ function CharacterMovieMatch() {
 
   // PUBLIC_INTERFACE
   function handleSubmit() {
-    // Result: Array of {movieId (number), match: boolean, chosen: string, correct: string}
-    const summary = movies.map(m => {
+    // Compute result summary
+    const summary = movies.map((m) => {
       return {
         movieId: m.id,
         poster: m.poster_path,
         movie: m.title,
         chosen: assignments[m.id],
         correct: m.correctCharacter,
-        correctMatch: assignments[m.id] && assignments[m.id] === m.correctCharacter
+        correctMatch:
+          !!assignments[m.id] && assignments[m.id] === m.correctCharacter,
       };
     });
     setResults(summary);
@@ -131,13 +197,13 @@ function CharacterMovieMatch() {
     setTimeout(() => {
       navigate("/summary/character-movie-match", {
         state: {
-          results: summary.map(item => ({
+          results: summary.map((item) => ({
             correct: item.correctMatch,
             guess: item.chosen,
             solution: item.correct,
             poster: item.poster,
-          }))
-        }
+          })),
+        },
       });
     }, 2000);
   }
@@ -149,7 +215,6 @@ function CharacterMovieMatch() {
     setReveal(false);
     setShowClues(false);
     setAssignments({});
-    // triggers useEffect to reload game
     setTimeout(() => window.location.reload(), 100);
   }
 
@@ -159,7 +224,6 @@ function CharacterMovieMatch() {
         Loading posters and character clues...
       </div>
     );
-
   if (!movies.length || !characterClues.length)
     return (
       <div className="kq-quiz-panel kq-center" style={{ marginTop: 25 }}>
@@ -168,144 +232,274 @@ function CharacterMovieMatch() {
       </div>
     );
 
-  const allAssigned = Object.keys(assignments).length === MOVIE_COUNT && Object.values(assignments).every(Boolean) && !results;
+  const allAssigned =
+    Object.keys(assignments).length === MOVIE_COUNT &&
+    Object.values(assignments).every(Boolean) &&
+    !results;
+
+  // Get available clues (not yet assigned)
+  function isClueAssigned(clue) {
+    return Object.values(assignments).includes(clue.character);
+  }
 
   return (
-    <div className="kq-quiz-panel">
+    <div className="kq-quiz-panel" tabIndex={-1}>
       <QuizProgressBar step={results ? MOVIE_COUNT : 0} total={MOVIE_COUNT} />
-      <h3 style={{ color: "#f604c2", textAlign: "center", marginBottom: 14 }}>
-        Drag the correct <span style={{ color: "#b51b3b" }}>character name</span> onto each movie poster!
-      </h3>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${MOVIE_COUNT}, minmax(120px,1fr))`,
-        gap: "22px",
-        justifyItems: "center",
-        marginBottom: "17px"
-      }}>
-        {movies.map(m => (
-          <div
-            key={m.id}
-            style={{
-              background: "#faeff9",
-              borderRadius: "12px",
-              boxShadow: "var(--kq-shadow)",
-              padding: 8,
-              textAlign: "center"
-            }}
-            onDragOver={allowDrop}
-            onDrop={e => onDrop(e, m.id)}
-          >
-            <img
-              src={getPosterUrl(m.poster_path, "w185")}
-              alt={m.title}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {/* Top: DRAGGABLE CLUES */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 13,
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          {characterClues.map((clue, idx) => (
+            <button
+              key={clue.character + idx}
               style={{
-                width: 105,
-                height: 158,
-                objectFit: "cover",
-                borderRadius: 8,
-                marginBottom: 8,
-                border: assignments[m.id] ? "3px solid #f604c2" : "2px dashed #f604c2",
-                background: "#ddd",
-                transition: "border 0.18s"
+                borderRadius: 7,
+                cursor:
+                  !isClueAssigned(clue) && !reveal && !results
+                    ? "grab"
+                    : "not-allowed",
+                padding: "10px 17px",
+                background: "#fff",
+                color: "#f604c2",
+                border: "2px solid #f604c2",
+                fontWeight: "bold",
+                fontSize: "1.08rem",
+                opacity: isClueAssigned(clue) || reveal || results ? 0.36 : 1,
+                pointerEvents:
+                  isClueAssigned(clue) || reveal || results
+                    ? "none"
+                    : "auto",
+                userSelect: "none",
+                outline:
+                  draggedClue === clue.character && !isClueAssigned(clue)
+                    ? "2.5px solid #b51b3b"
+                    : "none",
+                boxShadow: draggedClue === clue.character ? "0 0 4px #b51b3b88" : "",
+                transition: "opacity 0.15s, outline 0.18s, box-shadow 0.13s"
               }}
-              draggable={false}
-            />
-            <div style={{
-              minHeight: "32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: assignments[m.id] ? 700 : 400,
-              color: "#0b0a0a"
-            }}>
-              {assignments[m.id]
-                ? <span> 🏷️ <b>{assignments[m.id]}</b></span>
-                : <span style={{opacity:0.63}}>Drop character here</span>}
-            </div>
-            <div style={{ marginTop: 7, color: "#222", fontSize: 13, minHeight: 40 }}>
-              <b>{m.title}</b>
-            </div>
-            {reveal && <div style={{
-              marginTop: 2,
-              color: assignments[m.id] === m.correctCharacter ? "#1b9e38" : "#b51b3b",
-              fontWeight: "bold"
-            }}>
-              {assignments[m.id] === m.correctCharacter
-                ? "✅ Correct!"
-                : <>❌<span style={{fontWeight: 400, marginLeft:4}}>Ans: {m.correctCharacter}</span></>}
-            </div>}
-          </div>
-        ))}
-      </div>
-      <div style={{
-        margin: "20px 0 12px 0",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "13px",
-        justifyContent: "center"
-      }}>
-        {characterClues.map((c, idx) => (
-          <span
-            key={c.character + idx}
-            draggable={!assignments && !reveal}
-            onDragStart={e => startDrag(e, c.character)}
-            style={{
-              borderRadius: 7,
-              cursor: "grab",
-              padding: "10px 20px",
-              background: "#fff",
-              color: "#f604c2",
-              border: "2px solid #f604c2",
-              fontWeight: "bold",
-              fontSize: "1.09rem",
-              opacity: assignments && Object.values(assignments).includes(c.character)
-                ? 0.4 : 1,
-              pointerEvents: assignments && Object.values(assignments).includes(c.character)
-                ? "none" : "auto",
-              userSelect: "none"
-            }}
-            className="kq-btn outline"
+              tabIndex={isClueAssigned(clue) || reveal || results ? -1 : 0}
+              draggable={!isClueAssigned(clue) && !reveal && !results}
+              aria-label={`character ${clue.character}`}
+              onDragStart={(e) => onDragStartClue(e, clue.character)}
+              onDragEnd={onDragEndClue}
+              onKeyDown={(e) => {
+                // Space/Enter starts drag
+                if (
+                  !isClueAssigned(clue) &&
+                  !reveal &&
+                  !results &&
+                  (e.key === "Enter" || e.key === " ")
+                ) {
+                  setDraggedClue(clue.character);
+                }
+              }}
+              className="kq-btn outline"
+            >
+              {clue.character}
+            </button>
+          ))}
+        </div>
+        {/* BOTTOM: MOVIE POSTER GRID */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${MOVIE_COUNT}, minmax(122px,1fr))`,
+            gap: "22px",
+            justifyItems: "center",
+            alignItems: "flex-start",
+            marginTop: 9,
+            marginBottom: "7px",
+          }}
+        >
+          {movies.map((movie, idx) => {
+            const assignedCharacter = assignments[movie.id];
+            const isDropTarget = !assignedCharacter && !reveal && !results;
+            return (
+              <div
+                key={movie.id}
+                tabIndex={isDropTarget ? 0 : -1}
+                style={{
+                  background: "#faeff9",
+                  borderRadius: "12px",
+                  boxShadow: "var(--kq-shadow)",
+                  padding: 10,
+                  textAlign: "center",
+                  minWidth: 110,
+                  outline: isDropTarget && draggedClue ? "2.0px solid #f604c2" : undefined
+                }}
+                onDragOver={isDropTarget ? onDragOverPoster : undefined}
+                onDrop={isDropTarget ? (e) => onDropPoster(e, movie.id) : undefined}
+                aria-dropeffect={isDropTarget ? "move" : undefined}
+                onKeyUp={
+                  isDropTarget && draggedClue
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          assignClueToPoster(draggedClue, movie.id);
+                          setDraggedClue(null);
+                        }
+                      }
+                    : undefined
+                }
+              >
+                <img
+                  src={getPosterUrl(movie.poster_path, "w185")}
+                  alt={movie.title}
+                  style={{
+                    width: 105,
+                    height: 158,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    marginBottom: 7,
+                    border: assignedCharacter
+                      ? "3px solid #f604c2"
+                      : "2px dashed #f604c2",
+                    background: "#ddd",
+                    transition: "border 0.18s",
+                    opacity: reveal || results ? 0.84 : 1,
+                  }}
+                  draggable={false}
+                />
+                <div
+                  style={{
+                    minHeight: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: assignedCharacter ? 700 : 400,
+                    color: "#0b0a0a",
+                    marginBottom: 4,
+                  }}
+                  aria-live="polite"
+                >
+                  {assignedCharacter && (
+                    <span>
+                      🏷️ <b>{assignedCharacter}</b>
+                      {!reveal && !results && (
+                        <span
+                          title="Unassign"
+                          style={{
+                            fontSize: "1.0em",
+                            marginLeft: 7,
+                            opacity: 0.55,
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            !reveal && !results && clearAssignment(movie.id)
+                          }
+                          tabIndex={0}
+                          onKeyUp={(e) =>
+                            (e.key === "Delete" || e.key === "Backspace") &&
+                            clearAssignment(movie.id)
+                          }
+                          aria-label="Clear assignment"
+                        >
+                          ❌
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {!assignedCharacter && (
+                    <span
+                      style={{
+                        color: "#aaa",
+                        opacity: 0.63,
+                        fontSize: "0.97em",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {isDropTarget ? "Drop clue here" : "—"}
+                    </span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    color: "#222",
+                    fontSize: 13,
+                    minHeight: 36,
+                  }}
+                >
+                  <b>{movie.title}</b>
+                </div>
+                {reveal && (
+                  <div
+                    style={{
+                      marginTop: 2,
+                      color:
+                        assignments[movie.id] === movie.correctCharacter
+                          ? "#1b9e38"
+                          : "#b51b3b",
+                      fontWeight: "bold",
+                      minHeight: 18,
+                    }}
+                  >
+                    {assignments[movie.id] === movie.correctCharacter
+                      ? "✅ Correct!"
+                      : (
+                        <span>
+                          ❌
+                          <span style={{ fontWeight: 400, marginLeft: 4 }}>
+                            Ans: {movie.correctCharacter}
+                          </span>
+                        </span>
+                      )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="kq-quiz-action-bar" style={{ marginTop: 9 }}>
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={() => setShowClues((v) => !v)}
+            disabled={showClues || !!results}
           >
-            {c.character}
-          </span>
-        ))}
-      </div>
-      <div className="kq-quiz-action-bar" style={{ marginTop: 10 }}>
-        <button
-          className="kq-quiz-answer-btn"
-          onClick={() => setShowClues((v) => !v)}
-          disabled={showClues || !!results}
-        >
-          {showClues ? "Clue shown" : "Show Clue"}
-        </button>
-        <button
-          className="kq-quiz-answer-btn reveal"
-          onClick={handleReveal}
-          disabled={reveal || !!results}
-        >
-          Reveal
-        </button>
-        <button
-          className="kq-quiz-answer-btn"
-          onClick={handleSubmit}
-          disabled={!allAssigned || reveal || !!results}
-        >
-          Submit
-        </button>
-      </div>
-      {showClues && (
-        <div className="kq-quiz-clues" style={{marginTop:10}}>
-          <span>
-            <b>Tip:</b> Each movie poster is matched to a Kollywood character name. Drag a clue onto its movie!
-          </span>
+            {showClues ? "Clue shown" : "Show Clue"}
+          </button>
+          <button
+            className="kq-quiz-answer-btn reveal"
+            onClick={handleReveal}
+            disabled={reveal || !!results}
+          >
+            Reveal
+          </button>
+          <button
+            className="kq-quiz-answer-btn"
+            onClick={handleSubmit}
+            disabled={!allAssigned || reveal || !!results}
+          >
+            Submit
+          </button>
         </div>
-      )}
-      {results && (
-        <div style={{ color: "#1b9e38", marginTop: 16, textAlign: "center", fontWeight: 600 }}>
-          Results submitted! Redirecting...
-        </div>
-      )}
+        {showClues && (
+          <div className="kq-quiz-clues" style={{ marginTop: 8 }}>
+            <span>
+              <b>Tip:</b> Drag a character clue above onto its movie poster below. You can click ❌ to undo an assignment before submitting!
+            </span>
+          </div>
+        )}
+        {results && (
+          <div
+            style={{
+              color: "#1b9e38",
+              marginTop: 14,
+              textAlign: "center",
+              fontWeight: 600,
+            }}
+          >
+            Results submitted! Redirecting...
+          </div>
+        )}
+      </div>
     </div>
   );
 }
