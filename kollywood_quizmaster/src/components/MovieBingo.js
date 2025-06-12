@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { discoverTamilMovies, getMovieDetails, getMovieCast } from "../tmdb";
 
 /*
  * No direct usage of PUBLIC_URL here (must use process.env.PUBLIC_URL for React scripts).
@@ -86,15 +87,79 @@ function MovieBingo() {
 
   useEffect(() => {
     let didCancel = false;
-    // Simulate data fetch logic. Replace with live data fetch for real implementation.
+
+    // Log utility (keep all fetches and responses)
+    function logInfo() {
+      // eslint-disable-next-line no-console
+      if (console && typeof console.info === "function") {
+        // Arguments to array to better control output in React strict mode
+        // eslint-disable-next-line prefer-rest-params
+        console.info("[MovieBingo]", ...arguments);
+      }
+    }
+
     async function fetchBingoQuestions() {
       try {
-        // DUMMY EXAMPLE:
-        // const data = await fetchQuestionsFromAPI();
-        // setQuestions(data);
-        // For now, simulate fetch failure
-        throw new Error("Simulated environment/API failure");
+        logInfo("Starting fetch for Movie Bingo real questions...");
+        // Fetch a set of Tamil movies using TMDb live API (relaxed filtering)
+        const movies = await discoverTamilMovies({ page: 1, sort_by: "popularity.desc" });
+        logInfo("TMDb discoverTamilMovies result:", movies);
+
+        if (!Array.isArray(movies) || movies.length < 4) {
+          throw new Error("Not enough movies from TMDb for Bingo");
+        }
+
+        // Accept any movies with a title and some vote count, relax further as possible
+        // Some movies may lack "quiz properties", but we'll allow most valid entries
+        let filtered = movies.filter(
+          (m) =>
+            m &&
+            typeof m.title === "string" &&
+            m.title.trim().length >= 2 &&
+            Array.isArray(m.genre_ids) // any genre info
+        );
+        if (filtered.length < 9) {
+          logInfo("Not enough filtered movies, falling back to movies as fetched");
+          filtered = movies.slice(0, 9); // just use what we got
+        } else {
+          filtered = filtered.slice(0, 9); // get exactly 9 for 3x3 grid
+        }
+
+        // Build question objects - we allow ANY candidate, minimal requirements
+        // Optionally enhance with live trivia (random multiple choice based on titles)
+        const quizQs = filtered.map((movie, i) => {
+          // Option generation: shuffle 4 distinct movies, include correct
+          // Even if options are loose, that's ok - it's to ensure real TMDb content is visible
+          const optionMovies = [movie];
+          // Try to find "distractors" for options (title only, allow weak mixing)
+          while (optionMovies.length < 4 && filtered.length >= 4) {
+            let cand = filtered[Math.floor(Math.random() * filtered.length)];
+            if (!optionMovies.includes(cand)) optionMovies.push(cand);
+          }
+          // Shuffle options
+          for (let k = optionMovies.length - 1; k > 0; k--) {
+            const j = Math.floor(Math.random() * (k + 1));
+            [optionMovies[k], optionMovies[j]] = [optionMovies[j], optionMovies[k]];
+          }
+          logInfo(`MovieBingo Q${i+1}:`, { movie, options: optionMovies.map(m=>m.title)});
+          return {
+            qText: `Which movie matches this TMDb description? (${movie.title})`, // Loose filler, can improve with more hints if needed
+            options: optionMovies.map((m) => m.title),
+            correctIdx: optionMovies.findIndex((m) => m.id === movie.id),
+            userPick: null,
+            locked: false,
+            tmdbId: movie.id,
+            poster: movie.poster_path,
+          };
+        });
+
+        if (!didCancel) {
+          setQuestions(quizQs);
+          setDemoMode(false);
+          setError(null);
+        }
       } catch (e) {
+        logInfo("Movie Bingo TMDb fetch failed/fallback:", e && e.message || e);
         if (!didCancel) {
           setQuestions(demoQuestions);
           setDemoMode(true);
@@ -141,7 +206,7 @@ function MovieBingo() {
           </span>
         </div>
       )}
-      {/* Reuse local grid (DemoBingo) UI for both real and fallback demo data */}
+      {/* Always show real Bingo grid when ANY data is loaded */}
       <DemoBingo questions={questions} />
     </div>
   );

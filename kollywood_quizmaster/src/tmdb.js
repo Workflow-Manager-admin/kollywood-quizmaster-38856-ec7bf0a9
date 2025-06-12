@@ -10,6 +10,7 @@ const TMDB_API_KEY = "5bc67d3b06aecbd18121a3cbbc16eb59";
 
 /**
  * Helper for GET requests to TMDb API with authentication.
+ * LOGS ALL fetches and responses for debug.
  * @param {string} endpoint (e.g., '/search/movie')
  * @param {object} params - Query parameters as key-value pairs.
  * @returns {Promise<object>} - Parsed response from TMDb.
@@ -18,11 +19,30 @@ async function tmdbGet(endpoint, params = {}) {
   // Ensure API key is added to all requests
   const urlParams = new URLSearchParams({ api_key: TMDB_API_KEY, ...params });
   const url = `${TMDB_API_BASE_URL}${endpoint}?${urlParams.toString()}`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`TMDb API error: ${response.status} - ${response.statusText}`);
+  // Log outbound fetch for debug
+  if (console && typeof console.info === "function") {
+    console.info("[tmdbGet] Fetching:", url, params);
   }
-  return await response.json();
+  let response;
+  try {
+    response = await fetch(url);
+    if (console && typeof console.info === "function") {
+      console.info("[tmdbGet] Response:", response, "status:", response && response.status);
+    }
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.status} - ${response.statusText}`);
+    }
+    const result = await response.json();
+    if (console && typeof console.info === "function") {
+      console.info("[tmdbGet] Parsed JSON for", endpoint, result);
+    }
+    return result;
+  } catch (e) {
+    if (console && typeof console.error === "function") {
+      console.error("[tmdbGet] FAILED:", url, e);
+    }
+    throw e;
+  }
 }
 
 // PUBLIC_INTERFACE
