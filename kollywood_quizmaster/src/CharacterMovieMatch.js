@@ -1,153 +1,450 @@
-import React, { useEffect, useState } from "react";
-import { fetchPopularKollywoodMovies, fetchMovieDetails } from "./tmdbApi";
+import React, { useEffect, useState, useRef } from "react";
+import { fetchPopularKollywoodMovies, fetchMovieDetails, getPosterUrl } from "./tmdbApi";
 
-// Helper for shuffling array
+// Helper to shuffle array (Fisher-Yates)
 function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+  let arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 // PUBLIC_INTERFACE
 function CharacterMovieMatch({ onResult }) {
   /**
-   * Character-Movie Match Game: Players drag/drop (manual assign here) character names to correct movies.
-   * Shows clues, reveals, answer logic, progress.
+   * Character-Movie Match Game (Enhanced):
+   * Shows several Kollywood movie posters as drag-drop targets;
+   * User is given character/actor clues and must drag each clue onto the correct movie poster.
+   * Includes all required poster fetching, error handling, feedback, and drag drop logic.
    */
-  const [pairs, setPairs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState({});
-  const [status, setStatus] = useState("playing"); // playing | submitted | revealed
   const [error, setError] = useState("");
+  const [pairs, setPairs] = useState([]); // [{movieTitle, poster_path, char, castName, movieId}]
+  const [clues, setClues] = useState([]); // [{text, idx}]
+  const [options, setOptions] = useState([]); // poster array, shuffled
+  const [assignments, setAssignments] = useState({}); // { posterIdx: clueIdx }
+  const [dragging, setDragging] = useState(null); // clue idx being dragged
+  const [status, setStatus] = useState("playing"); // playing | submitted | revealed
+  const [feedback, setFeedback] = useState({}); // posterIdx -> "correct"/"wrong"
+  const [score, setScore] = useState(null);
 
+  // Load question posters/characters - at least 3 movies with suitable posters/character clues
   useEffect(() => {
     let ignore = false;
-    async function loadQ() {
+    async function load() {
       setLoading(true);
       setError("");
+      setScore(null);
+      setAssignments({});
+      setClues([]);
+      setOptions([]);
+      setFeedback({});
+      setStatus("playing");
+      // Find 3-4 unique movies with actual posters and main actor/character
       try {
-        // Grab 3 movies with credits, each with "main" character
-        const data = await fetchPopularKollywoodMovies(1);
-        if (!data || !Array.isArray(data.results) || data.results.length < 3)
-          throw new Error("TMDb didn't return enough Kollywood movies. Quota exhausted or data error.");
-        let selected = shuffle(data.results.filter(m => m.id)).slice(0, 3);
-        const details = await Promise.all(selected.map(x => fetchMovieDetails(x.id)));
-        // Each: {character, movieTitle}
-        const mapped = details.map(movie =>
-          ({
-            movieTitle: movie.title,
-            char: movie.credits?.cast?.[0]?.character || movie.title[0] + " (Hero)",
-            castName: movie.credits?.cast?.[0]?.name || "Hero",
-          })
+        const page = Math.floor(Math.random() * 3) + 1;
+        const data = await fetchPopularKollywoodMovies(page);
+        if (!Array.isArray(data.results) || data.results.length < 5)
+          throw new Error("TMDb didn't return enough Kollywood movies. Try again later.");
+        // Filter out movies without posters
+        const posterMovies = data.results.filter(m => !!m.poster_path && !!m.id);
+        if (posterMovies.length < 3)
+          throw new Error("Not enough Kollywood movie posters available now. Try refresh.");
+        // Pick 3 random movies (use 3 for drag-drop challenge and layout simplicity)
+        let candidates = shuffle(posterMovies).slice(0, 6); // grab more, then filter by credits
+        // Fetch movie credits for character/actor clues
+        let pairsArr = [];
+        for (let i = 0; i < candidates.length && pairsArr.length < 3; i++) {
+          let det;
+          try {
+            det = await fetchMovieDetails(candidates[i].id);
+          } catch (e) {
+            continue; // skip if details not loadable
+          }
+          // Take the first cast member with a non-empty character/clue
+          let cc = (det.credits?.cast || []).find(actor => actor.character && actor.name);
+          if (!cc) continue;
+          // Avoid extremely generic names like "Self" or empty strings
+          if (/^self$/i.test(cc.character.trim()) || cc.character.length < 2) continue;
+          pairsArr.push({
+            movieTitle: det.title,
+            poster_path: det.poster_path,
+            char: cc.character,
+            castName: cc.name,
+            movieId: det.id
+          });
+        }
+        if (pairsArr.length < 3)
+          throw new Error("Couldn't retrieve enough movies with suitable character clues. Try again.");
+        // Shuffle to increase challenge with visually similar posters
+        const shuffledOptions = shuffle(pairsArr);
+        // Prepare clues as objects, then shuffle them for drag-n-drop
+        const clueObjs = shuffle(
+          shuffledOptions.map((p, idx) => ({
+            text: `${p.char} (${p.castName})`,
+            idx: idx,
+            assigned: false
+          }))
         );
-        setPairs(mapped);
-        setAnswers({});
-        setStatus("playing");
+        if (ignore) return;
+        setPairs(shuffledOptions);
+        setOptions(shuffledOptions); // this is array of posters, mapping idx to clue idx
+        setClues(clueObjs);
       } catch (e) {
-        setError(e.message || "Failed to load data. Please try again.");
+        setError(e.message || "Failed to generate the quiz. Please try again.");
       }
       setLoading(false);
     }
-    loadQ();
+    load();
     return () => (ignore = true);
   }, []);
 
-  // For rendering randomized option lists
-  const movieTitles = shuffle(pairs.map(p => p.movieTitle));
-  const charNames = shuffle(pairs.map(p => `${p.char} (${p.castName})`));
+  // Drag and drop event handlers
+  const dragClueStart = idx => {
+    setDragging(idx);
+  };
+  const dragClueEnd = () => {
+    setDragging(null);
+  };
 
-  function handleChange(charIdx, val) {
-    setAnswers(prev => ({ ...prev, [charIdx]: val }));
-  }
-
-  function handleSubmit(e) {
+  // Allow drop only on unassigned posters
+  const allowDrop = (e, posterIdx) => {
     e.preventDefault();
-    setStatus("submitted");
-    let score = 0;
-    for (let i = 0; i < pairs.length; i++) {
-      if (answers[i] === pairs[i].movieTitle) score += 1;
+    // Don't allow drop if already assigned
+    if (assignments.hasOwnProperty(posterIdx)) return false;
+    return true;
+  };
+
+  // Drop a clue onto a poster
+  const handleDrop = (e, posterIdx) => {
+    if (assignments.hasOwnProperty(posterIdx)) return; // prevent double-assignment
+    setAssignments(prev => ({
+      ...prev,
+      [posterIdx]: dragging
+    }));
+    setDragging(null);
+  };
+
+  // Remove clue assignment (if user clicks "undo assignment")
+  const unassign = posterIdx => {
+    setAssignments(prev => {
+      const newA = { ...prev };
+      delete newA[posterIdx];
+      return newA;
+    });
+  };
+
+  // Submit: grade and update feedback/score
+  const handleSubmit = e => {
+    e && e.preventDefault();
+    let correct = 0;
+    let feedbackMap = {};
+    for (let i = 0; i < options.length; i++) {
+      const assignedClueIdx = assignments[i];
+      if (
+        typeof assignedClueIdx === "number" &&
+        clues[assignedClueIdx] &&
+        clues[assignedClueIdx].idx === i // clue idx matches poster idx
+      ) {
+        feedbackMap[i] = "correct";
+        correct++;
+      } else if (typeof assignedClueIdx === "number") {
+        feedbackMap[i] = "wrong";
+      }
     }
-    onResult && onResult(score, pairs, answers);
-  }
+    setScore(correct);
+    setFeedback(feedbackMap);
+    setStatus("submitted");
+    onResult && onResult(correct, pairs, assignments);
+  };
 
-  function handleReveal() {
+  // Reveal: display correct answers, lock inputs
+  const handleReveal = () => {
     setStatus("revealed");
-    onResult && onResult(0, pairs, null, true);
+    setFeedback({});
+    setScore(0);
+    onResult && onResult(0, pairs, assignments, true);
+  };
+
+  // Utility: Get clue chip text from clue idx (used to render assigned clues)
+  function getClueText(clueIdx) {
+    const cc = clues[clueIdx];
+    return cc ? cc.text : "";
   }
 
-  if (loading) return <div style={{ minHeight: 180 }}>Loading question...</div>;
-  if (error) return <div style={{ color: "var(--kavia-orange)" }}>{error}</div>;
+  // Has all clues been assigned to posters?
+  const allAssigned =
+    Object.keys(assignments).length === options.length &&
+    Object.values(assignments).every(v => typeof v === "number");
 
+  if (loading)
+    return (
+      <div style={{ minHeight: 220, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Loading posters and clues...
+      </div>
+    );
+  if (error)
+    return (
+      <div style={{ color: "var(--kavia-orange)" }}>{error}</div>
+    );
+
+  // --- UI Rendering ---
   return (
     <div style={{
-      background: "var(--base-dark)", padding: 28, borderRadius: 12,
-      boxShadow: "0 4px 14px rgba(50,20,60,0.11)", maxWidth: 520, margin: "0 auto"
+      background: "var(--base-dark)",
+      padding: 28,
+      borderRadius: 15,
+      boxShadow: "0 4px 18px rgba(50,20,60,0.13)",
+      maxWidth: 740,
+      margin: "0 auto"
     }}>
-      <h2 className="subtitle" style={{ color: "var(--kavia-orange)", marginBottom: 14 }}>
-        Match the Character to the Correct Movie!
+      <h2 className="subtitle" style={{ color: "var(--kavia-orange)", marginBottom: 20, textAlign: "center" }}>
+        Drag the Character/Actor onto the Correct Movie Poster!
       </h2>
-      <form onSubmit={handleSubmit}>
-        <table style={{ width: "100%", borderSpacing: 0, marginBottom: 10 }}>
-          <thead>
-            <tr style={{ color: "var(--base-light)", fontWeight: 600 }}>
-              <td>Character (Actor)</td>
-              <td>Movie</td>
-            </tr>
-          </thead>
-          <tbody>
-            {pairs.map((p, idx) => (
-              <tr key={idx}>
-                <td style={{ padding: 4 }}>
-                  {`${p.char} (${p.castName})`}
-                </td>
-                <td style={{ padding: 4 }}>
-                  {status === "revealed"
-                    ? <span style={{ color: "#19db57", fontWeight: 600 }}>{p.movieTitle}</span>
-                    : (
-                      <select
-                        value={answers[idx] || ""}
-                        onChange={e => handleChange(idx, e.target.value)}
-                        required
-                        style={{
-                          padding: "6px 16px",
-                          border: "1px solid var(--border-color)",
-                          borderRadius: 6,
-                          background: "#18182a",
-                          color: "white"
-                        }}
-                        disabled={status !== "playing"}
-                      >
-                        <option value="" disabled>Pick movie</option>
-                        {movieTitles.map((m, i) => (
-                          <option key={i} value={m}>{m}</option>
-                        ))}
-                      </select>
-                    )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {status === "playing" &&
-          <div>
-            <button className="btn btn-large" type="submit">Submit</button>
-            <button className="btn" type="button" style={{ marginLeft: 12 }} onClick={handleReveal}>Reveal Answers</button>
-          </div>
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        marginBottom: 22,
+        flexWrap: "wrap",
+        gap: 12
+      }}>
+        {
+          clues.map((clue, idx) => {
+            // Omit if clue is already assigned (assigned to some poster)
+            const isAssigned = Object.values(assignments).includes(idx);
+            return !isAssigned && (
+              <div
+                key={idx}
+                draggable={status === "playing"}
+                onDragStart={() => dragClueStart(idx)}
+                onDragEnd={dragClueEnd}
+                style={{
+                  background: dragging === idx ? "#13d4ff" : "var(--base-light)",
+                  color: "#191743",
+                  borderRadius: 19,
+                  boxShadow: dragging === idx
+                    ? "0 2px 12px #13d4ff44"
+                    : "0 1px 8px rgba(0,0,0,0.10)",
+                  padding: "9px 18px",
+                  fontWeight: 600,
+                  fontSize: 17,
+                  cursor: status === "playing" ? "grab" : "not-allowed",
+                  opacity: dragging === null || dragging === idx ? 1 : 0.83,
+                  userSelect: "none"
+                }}
+              >
+                {clue.text}
+              </div>
+            );
+          })
         }
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{
+          display: "flex",
+          gap: 34,
+          justifyContent: "center",
+          flexWrap: "wrap",
+          marginBottom: 22
+        }}>
+          {options.map((poster, idx) => {
+            // Drag-over highlight coloring
+            const isOver = false; // (not using lib, so can't highlight without extra state)
+            const assignedClueIdx = assignments[idx];
+            const isSubmitted = status === "submitted";
+            let borderClr =
+              status === "revealed"
+                ? "#13d4ff"
+                : isSubmitted && feedback[idx] === "correct"
+                  ? "#32f095"
+                  : isSubmitted && feedback[idx] === "wrong"
+                    ? "#ec184c"
+                    : isOver
+                      ? "#f8ff3f"
+                      : "var(--border-color)";
+            let boxSdw =
+              isSubmitted && feedback[idx] === "correct"
+                ? "0 0 14px #4cff7e77"
+                : isSubmitted && feedback[idx] === "wrong"
+                  ? "0 0 20px #ea183199"
+                  : "";
+
+            return (
+              <div
+                key={idx}
+                onDragOver={e => allowDrop(e, idx) ? e.preventDefault() : null}
+                onDrop={e => allowDrop(e, idx) && status === "playing" ? handleDrop(e, idx) : null}
+                tabIndex={0}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  background: "#191743",
+                  borderRadius: 18,
+                  border: `3.5px solid ${borderClr}`,
+                  minWidth: 155,
+                  minHeight: 242,
+                  padding: "16px 8px 6px",
+                  margin: "0 1vw",
+                  boxShadow: boxSdw,
+                  position: "relative"
+                }}
+              >
+                <img
+                  src={getPosterUrl(poster.poster_path, "w342")}
+                  alt={poster.movieTitle}
+                  style={{
+                    width: 130,
+                    height: 190,
+                    objectFit: "cover",
+                    borderRadius: 12,
+                    marginBottom: 7,
+                    background: "#e2e0ea"
+                  }}
+                />
+                <div style={{
+                  fontWeight: 700,
+                  fontSize: 15,
+                  color: "#ffe853",
+                  textAlign: "center",
+                  lineHeight: "1.2"
+                }}>
+                  {poster.movieTitle}
+                </div>
+                <div style={{
+                  marginTop: 5,
+                  minHeight: 38,
+                  minWidth: 93,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}>
+                  {/* Show assigned clue if set */}
+                  {
+                    typeof assignedClueIdx === "number"
+                      ? (
+                        <div
+                          style={{
+                            background: "#ffda31",
+                            color: "#191743",
+                            borderRadius: 11,
+                            fontWeight: 600,
+                            padding: "6px 14px",
+                            margin: "0 7px",
+                            fontSize: 16,
+                            boxShadow: "0 1px 6px #ffda3133",
+                            display: "flex",
+                            alignItems: "center"
+                          }}
+                        >
+                          {getClueText(assignedClueIdx)}
+                          {status === "playing" &&
+                            <button
+                              type="button"
+                              onClick={() => unassign(idx)}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "#e72828",
+                                marginLeft: 7,
+                                fontWeight: 700,
+                                fontSize: 17,
+                                cursor: "pointer"
+                              }}
+                              title="Undo assignment"
+                            >×</button>
+                          }
+                        </div>
+                      )
+                      : (
+                        status === "playing" &&
+                        <span style={{ color: "#ffc", fontSize: 12, opacity: 0.86 }}>Drop a clue here</span>
+                      )
+                  }
+                </div>
+                {/* Show feedback tick/cross after submission */}
+                {status === "submitted" && (feedback[idx] === "correct" || feedback[idx] === "wrong") && (
+                  <div style={{
+                    position: "absolute",
+                    top: 7,
+                    right: 10,
+                    fontSize: 22,
+                    fontWeight: 900,
+                    color: feedback[idx] === "correct" ? "#57ff7a" : "#ec184c",
+                    textShadow: "0 0 4px black"
+                  }}>
+                    {feedback[idx] === "correct" ? "✔" : "✗"}
+                  </div>
+                )}
+                {/* Display correct answer if revealed */}
+                {status === "revealed" && (
+                  <div style={{
+                    position: "absolute",
+                    top: 7,
+                    right: 10,
+                    fontSize: 18,
+                    color: "#ffe853",
+                    fontWeight: 700,
+                    textShadow: "0 0 6px #000"
+                  }}>Ans</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {/* Control buttons and feedback UI */}
+        {status === "playing" && (
+          <div style={{ textAlign: "center", marginTop: 18 }}>
+            <button
+              type="submit"
+              className="btn btn-large"
+              style={{ minWidth: 135 }}
+              disabled={!allAssigned}
+            >
+              Submit
+            </button>
+            <button
+              className="btn"
+              type="button"
+              style={{ marginLeft: 18 }}
+              onClick={handleReveal}
+            >
+              Reveal Answers
+            </button>
+            {!allAssigned && (
+              <span style={{ marginLeft: 20, color: "#ffc97e", fontWeight: 500, fontSize: 14 }}>
+                <em>Assign all clues to posters first!</em>
+              </span>
+            )}
+          </div>
+        )}
         {status === "submitted" && (
-          <div>
-            <div style={{ color: "#72e665", marginTop: 14 }}>
-              Your score: {Object.keys(answers).filter(i => answers[i] === pairs[i].movieTitle).length} / {pairs.length}
+          <div style={{ textAlign: "center", marginTop: 26 }}>
+            <div style={{
+              color: "#77fb8d",
+              fontWeight: 700,
+              fontSize: 18,
+              letterSpacing: 1.2
+            }}>
+              Score: {score} / {pairs.length}
             </div>
-            <button className="btn btn-large" type="button" onClick={handleReveal}>Reveal</button>
+            <button className="btn btn-large"
+              type="button"
+              style={{ marginTop: 12 }}
+              onClick={handleReveal}
+            >Reveal</button>
           </div>
         )}
         {status === "revealed" && (
-          <div style={{ color: "var(--base-light)", marginTop: 12 }}>
-            Correct answers are highlighted above!
+          <div style={{ textAlign: "center", marginTop: 24, color: "var(--base-light)" }}>
+            Correct answers are now displayed above. Try the next round!
           </div>
         )}
       </form>
     </div>
-  )
+  );
 }
 
 export default CharacterMovieMatch;
