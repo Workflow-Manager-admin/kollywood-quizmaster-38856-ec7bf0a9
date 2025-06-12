@@ -463,7 +463,6 @@ function CastCombo() {
         </div>
       )}
     </div>
-  </div>
   );
 }
 
