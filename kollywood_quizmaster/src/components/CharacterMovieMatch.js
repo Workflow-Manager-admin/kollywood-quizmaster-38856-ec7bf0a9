@@ -12,6 +12,9 @@ import QuizProgressBar from "./QuizProgressBar";
 /**
  * Ensure no use of PUBLIC_URL (must use process.env.PUBLIC_URL for React scripts).
  */
+// [NO direct usage found in this file.]
+// If used elsewhere in the repo, please ensure all uses are replaced with process.env.PUBLIC_URL.
+// There are no direct uses of PUBLIC_URL here, so this note is for reference only.
 // PUBLIC_INTERFACE
 function CharacterMovieMatch() {
   // === CONFIGURABLES ===
@@ -206,12 +209,25 @@ function CharacterMovieMatch() {
     }
   }
 
+  // PUBLIC_INTERFACE
   function clearAssignment(movieId) {
     setAssignments(prev => {
       const newAssign = { ...prev };
       delete newAssign[movieId];
       return newAssign;
     });
+  }
+
+  // PUBLIC_INTERFACE
+  // Remove the last clue assignment
+  function undoLastAssignment() {
+    const assignedIds = Object.keys(assignments);
+    if (assignedIds.length === 0) return;
+    // Find the assignment with the last most recent change (most recently added)
+    // Since each assignment always fully replaces movieId->character, we can just pop the last key
+    // (or, if clues assigned sequentially, remove the last assigned)
+    const lastAssignedMovieId = assignedIds[assignedIds.length - 1];
+    clearAssignment(lastAssignedMovieId);
   }
 
   // Evaluate user assignments for round
@@ -478,26 +494,6 @@ function CharacterMovieMatch() {
                   {assignedCharacter && (
                     <span>
                       🏷️ <b>{assignedCharacter}</b>
-                      {!reveal && (
-                        <span
-                          title="Unassign"
-                          style={{
-                            fontSize: "1.0em",
-                            marginLeft: 7,
-                            opacity: 0.55,
-                            cursor: "pointer",
-                          }}
-                          onClick={() => !reveal && clearAssignment(movie.id)}
-                          tabIndex={0}
-                          onKeyUp={(e) =>
-                            (e.key === "Delete" || e.key === "Backspace") &&
-                            clearAssignment(movie.id)
-                          }
-                          aria-label="Clear assignment"
-                        >
-                          ❌
-                        </span>
-                      )}
                     </span>
                   )}
                   {!assignedCharacter && (
@@ -579,10 +575,31 @@ function CharacterMovieMatch() {
             Submit
           </button>
         </div>
+        {/* New centered undo button under main grid */}
+        <div style={{ display: "flex", justifyContent: "center", margin: "18px 0 -2px 0" }}>
+          <button
+            className="kq-btn outline"
+            style={{
+              minWidth: 120,
+              color: "#f604c2",
+              border: "2px solid #f604c2",
+              fontWeight: "bold",
+              borderRadius: 7,
+              opacity: Object.keys(assignments).length === 0 || reveal ? 0.45 : 1,
+              cursor: Object.keys(assignments).length === 0 || reveal ? "not-allowed" : "pointer",
+              pointerEvents: Object.keys(assignments).length === 0 || reveal ? "none" : "auto"
+            }}
+            onClick={undoLastAssignment}
+            disabled={Object.keys(assignments).length === 0 || reveal}
+            aria-label="Undo last clue match"
+          >
+            ⬅️ Undo Last Match
+          </button>
+        </div>
         {showClues && (
           <div className="kq-quiz-clues" style={{ marginTop: 8 }}>
             <span>
-              <b>Tip:</b> Drag a character clue above onto its movie poster below. You can click ❌ to undo an assignment before submitting!
+              <b>Tip:</b> Drag a character clue above onto its movie poster below. Use the Undo button below to remove your last assigned clue before submitting!
             </span>
           </div>
         )}
